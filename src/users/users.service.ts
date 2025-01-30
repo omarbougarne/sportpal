@@ -10,8 +10,17 @@ export class UsersService {
     constructor(@InjectModel(User.name) private userModel: Model<UserDocument>){}
     
     async create(createUserDto: CreateUSerDto): Promise<User>{
+
     try{
-        const salt = await bcrypt.genSalt()
+        //Checking user existence in Database
+        //doesnt check for now to Fix later
+        const checkUserExistence = await this.userModel.findOne({email : createUserDto.email}).exec()
+        if(checkUserExistence){
+            throw new HttpException('User Already Exists', HttpStatus.CONFLICT);
+        }
+
+        //Password Hashing and user creation
+        const salt = await bcrypt.genSalt(3)
         const hashedPassword = await bcrypt.hash(createUserDto.password, salt)
         const createUser = new this.userModel({
             ...createUserDto,

@@ -9,6 +9,7 @@ async function bootstrap() {
   const maxRetries = 6;
   let port = defaultPort;
 
+  //Incrementi Port by +1 if Port is not available
   for(let i = 0; i < maxRetries; i++){
       try{
       await app.listen(port);
