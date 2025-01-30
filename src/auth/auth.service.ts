@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/users/users.service';
 import * as bcrypt from 'bcrypt'
-import { CreateUSerDto } from 'src/users/dto/create.user.dto';
+import { CreateUserDto } from 'src/users/dto/create.user.dto';
 
 @Injectable()
 export class AuthService {
@@ -23,7 +23,7 @@ export class AuthService {
        
     }
 
-    async signUp(createUserDto: CreateUSerDto){
+    async signUp(createUserDto: CreateUserDto){
         return this.usersService.create(createUserDto)
     }
 }
