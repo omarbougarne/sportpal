@@ -12,7 +12,7 @@ export class AuthController {
             return this.authService.signUp(createUserDto);
         }
     @Post('/login')
-    async login(@Request() req){
-        return this.authService.login(req.user)
+    async login(@Body() createUSerDto: CreateUSerDto){
+        return this.authService.login(createUSerDto.email, createUSerDto.password)
     }
 }
