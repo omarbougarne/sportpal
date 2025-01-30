@@ -8,6 +8,7 @@ import * as bcrypt from 'bcrypt'
 @Injectable()
 export class UsersService {
     constructor(@InjectModel(User.name) private userModel: Model<UserDocument>){}
+    
     async create(createUserDto: CreateUSerDto): Promise<User>{
         const salt = await bcrypt.genSalt()
         const hashedPassword = await bcrypt.hash(createUserDto.password, salt)
