@@ -37,14 +37,12 @@ export class UsersService {
   }
 
   async findUser(email: string): Promise<User | undefined> {
-    try {
-      const user = await this.userModel.findOne({ email }).exec();
-      if (!user) {
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-      }
-      return user;
-    } catch (error) {
-      throw new HttpException('Error finding user', HttpStatus.INTERNAL_SERVER_ERROR);
+  
+    const user = await this.userModel.findOne({ email }).exec();
+    if (!user) {
+      throw new HttpException('User with this email does not exist', HttpStatus.NOT_FOUND);
     }
-  }
+    return user;
+  
+}
 }
