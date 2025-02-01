@@ -10,31 +10,29 @@ import * as cron from 'node-cron'
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './auth/common/guards/roles.guard';
 import { GroupModule } from './group/group.module';
-import { FroupService } from './froup/froup.service';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: '.env', 
+      envFilePath: '.env',
       isGlobal: true
     }),
     MongooseModule.forRoot(process.env.MONGODB_URI),
-      UsersModule,
-      AuthModule,
-      GroupModule],
+    UsersModule,
+    AuthModule,
+    GroupModule],
   controllers: [AppController],
   providers: [AppService,
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
     },
-    FroupService,
   ],
 })
 export class AppModule implements OnModuleInit {
-  constructor(private readonly usersService: UsersService){}
+  constructor(private readonly usersService: UsersService) { }
   onModuleInit() {
-    cron.schedule('0 0 * * *', async () =>{
+    cron.schedule('0 0 * * *', async () => {
       await this.usersService.permanentlyDeleteUsers();
     })
   }
