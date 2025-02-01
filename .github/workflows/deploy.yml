@@ -37,7 +37,7 @@ jobs:
         run: pnpm build
 
       - name: Deploy to Netlify
-        run: npx netlify deploy --prod --dir=build
+        run: pnpm netlify deploy --prod --dir=build
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
