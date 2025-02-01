@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import { User, UserDocument } from './schema/users.schema';
 import { CreateUserDto } from './dto/create.user.dto';
 import * as bcrypt from 'bcrypt';
+import { UpdateUserDto } from './dto/update.user.dto';
 
 @Injectable()
 export class UsersService {
@@ -44,5 +45,28 @@ export class UsersService {
     }
     return user;
   
-}
+  }
+
+  async updateUser(userId: string, updateUserDto: UpdateUserDto): Promise<User>{
+    const user = this.userModel.findByIdAndUpdate(userId, updateUserDto, { new: true }).exec();
+    if(!user){
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND)
+    }
+    return user;
+  }
+
+  async sofDeleteUsers(userId: string): Promise<User>{
+    const user = this.userModel.findByIdAndUpdate(userId, {deletedAt: new Date}, { new: true }).exec();
+    if(!user){
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND)
+    }
+    return user;
+  }
+
+  async permanentlyDeleteUsers(): Promise<void>{
+    const pastThirtyDays = new Date();
+    pastThirtyDays.setDate(pastThirtyDays.getDate() - 30)
+    await  this.userModel.deleteMany({deletedAt: { $lte: pastThirtyDays }}).exec()
+    
+  }
 }
