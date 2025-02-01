@@ -33,33 +33,59 @@ export class UsersService {
       return { data: savedUser };
     } catch (error) {
       this.logger.error('Error creating user', error.stack)
-      if (error instanceof HttpException) {
-        throw error;
-      }
       throw new HttpException('Error creating user', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
-  async findAll(): Promise<User[]> {
-    return this.userModel.find().exec();
+  async findAll(): Promise<{ data: User[] }> {
+    try {
+      const users = await this.userModel.find().exec();
+      return { data: users }
+    } catch (error) {
+      this.logger.error('Error finding users', error.stack)
+      throw new HttpException('Error finding users', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
-  async findUser(email: string): Promise<User | undefined> {
-
-    const user = await this.userModel.findOne({ email }).exec();
-    if (!user) {
-      throw new HttpException('User with this email does not exist', HttpStatus.NOT_FOUND);
+  async findOne(id: string): Promise<{ data: User }> {
+    try {
+      const user = await this.userModel.findById(id).exec();
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+      return { data: user };
+    } catch (error) {
+      this.logger.error('Error finding user', error.stack)
+      throw new HttpException('Error creating user', HttpStatus.INTERNAL_SERVER_ERROR);
     }
-    return user;
 
   }
 
-  async updateUser(userId: string, updateUserDto: UpdateUserDto): Promise<User> {
-    const user = this.userModel.findByIdAndUpdate(userId, updateUserDto, { new: true }).exec();
-    if (!user) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND)
+  async findByEmail(email: string): Promise<{ data: User }> {
+    try {
+      const user = await this.userModel.findOne({ email }).exec();
+      if (!user) {
+        throw new HttpException('User with this email does not exist', HttpStatus.NOT_FOUND);
+      }
+      return { data: user };
+    } catch (error) {
+      this.logger.error('Error finding user', error.stack)
+      throw new HttpException('Error creating user', HttpStatus.INTERNAL_SERVER_ERROR);
     }
-    return user;
+
+  }
+
+  async updateUser(userId: string, updateUserDto: UpdateUserDto): Promise<{ data: User }> {
+    try {
+      const user = await this.userModel.findByIdAndUpdate(userId, updateUserDto, { new: true }).exec();
+      if (!user) {
+        throw new HttpException('User with this email does not exist', HttpStatus.NOT_FOUND);
+      }
+      return { data: user };
+    } catch (error) {
+      this.logger.error('Error finding user', error.stack)
+      throw new HttpException('Error creating user', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   async sofDeleteUsers(userId: string): Promise<User> {
