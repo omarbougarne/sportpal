@@ -1,4 +1,4 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, UserDocument } from './schema/users.schema';
@@ -8,9 +8,10 @@ import { UpdateUserDto } from './dto/update.user.dto';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  private readonly logger = new Logger(UsersService.name)
+  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) { }
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
+  async create(createUserDto: CreateUserDto): Promise<{ data: User }> {
     try {
       // Check if user already exists
       const existingUser = await this.userModel.findOne({ email: createUserDto.email }).exec();
@@ -28,49 +29,51 @@ export class UsersService {
         password: hashedPassword,
       });
 
-      return await createUser.save();
+      const savedUser = await createUser.save()
+      return { data: savedUser };
     } catch (error) {
+      this.logger.error('Error creating user', error.stack)
       if (error instanceof HttpException) {
         throw error;
       }
       throw new HttpException('Error creating user', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
-  
+
   async findAll(): Promise<User[]> {
     return this.userModel.find().exec();
   }
 
   async findUser(email: string): Promise<User | undefined> {
-  
+
     const user = await this.userModel.findOne({ email }).exec();
     if (!user) {
       throw new HttpException('User with this email does not exist', HttpStatus.NOT_FOUND);
     }
     return user;
-  
+
   }
 
-  async updateUser(userId: string, updateUserDto: UpdateUserDto): Promise<User>{
+  async updateUser(userId: string, updateUserDto: UpdateUserDto): Promise<User> {
     const user = this.userModel.findByIdAndUpdate(userId, updateUserDto, { new: true }).exec();
-    if(!user){
+    if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND)
     }
     return user;
   }
 
-  async sofDeleteUsers(userId: string): Promise<User>{
-    const user = this.userModel.findByIdAndUpdate(userId, {deletedAt: new Date}, { new: true }).exec();
-    if(!user){
+  async sofDeleteUsers(userId: string): Promise<User> {
+    const user = this.userModel.findByIdAndUpdate(userId, { deletedAt: new Date }, { new: true }).exec();
+    if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND)
     }
     return user;
   }
 
-  async permanentlyDeleteUsers(): Promise<void>{
+  async permanentlyDeleteUsers(): Promise<void> {
     const pastThirtyDays = new Date();
     pastThirtyDays.setDate(pastThirtyDays.getDate() - 30)
-    await  this.userModel.deleteMany({deletedAt: { $lte: pastThirtyDays }}).exec()
-    
+    await this.userModel.deleteMany({ deletedAt: { $lte: pastThirtyDays } }).exec()
+
   }
 }
