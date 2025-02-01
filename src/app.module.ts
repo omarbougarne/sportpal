@@ -7,6 +7,8 @@ import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UsersService } from './users/users.service';
 import * as cron from 'node-cron'
+import { APP_GUARD } from '@nestjs/core';
+import { RolesGuard } from './auth/common/guards/roles.guard';
 
 @Module({
   imports: [
@@ -18,7 +20,12 @@ import * as cron from 'node-cron'
       UsersModule,
       AuthModule],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService,
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
+  ],
 })
 export class AppModule implements OnModuleInit {
   constructor(private readonly usersService: UsersService){}
