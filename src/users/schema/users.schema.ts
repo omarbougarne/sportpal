@@ -24,6 +24,18 @@ export class User{
 
     @Prop({ type: String, enum: Role, default: Role.User })
     role: Role
+    
+    @Prop({type: [String], required: false})
+    favoriteSports?: string
+
+    @Prop({type: [String], required: false})
+    disponsibility?: string
+
+    @Prop({type: String, required: false})
+    athleticLevel?: string
+
+    @Prop({type: String, required: false})
+    location?: string
 
     @Prop({type: Date, default: null})
     deletedAt: Date | null

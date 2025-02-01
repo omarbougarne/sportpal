@@ -19,4 +19,19 @@ export class UpdateUserDto{
     @MinLength(6)
     password: string;
 
+    @IsOptional()
+    @IsNotEmpty()
+    @IsString()
+  favoriteSports?: string[];
+
+  @IsOptional()
+    @IsNotEmpty()
+    @IsString()
+  athleticLevel?: string;
+
+  @IsOptional()
+    @IsNotEmpty()
+    @IsString()
+  disponsibility?: string[];
+
 }
