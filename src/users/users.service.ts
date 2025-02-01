@@ -88,18 +88,28 @@ export class UsersService {
     }
   }
 
-  async sofDeleteUsers(userId: string): Promise<User> {
-    const user = this.userModel.findByIdAndUpdate(userId, { deletedAt: new Date }, { new: true }).exec();
-    if (!user) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND)
+  async sofDeleteUsers(userId: string): Promise<{ data: User }> {
+    try {
+      const user = await this.userModel.findByIdAndUpdate(userId, { deletedAt: new Date }, { new: true }).exec();
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND)
+      }
+      return { data: user };
+    } catch (error) {
+      this.logger.error('Error finding user', error.stack)
+      throw new HttpException('Error creating user', HttpStatus.INTERNAL_SERVER_ERROR)
     }
-    return user;
   }
 
   async permanentlyDeleteUsers(): Promise<void> {
-    const pastThirtyDays = new Date();
-    pastThirtyDays.setDate(pastThirtyDays.getDate() - 30)
-    await this.userModel.deleteMany({ deletedAt: { $lte: pastThirtyDays } }).exec()
-
+    try {
+      const pastThirtyDays = new Date();
+      pastThirtyDays.setDate(pastThirtyDays.getDate() - 30)
+      const result = await this.userModel.deleteMany({ deletedAt: { $lte: pastThirtyDays } }).exec()
+      this.logger.log(`Premanently deleted ${result.deletedCount} users`)
+    } catch (error) {
+      this.logger.error('Error permanently deleting users', error.stack);
+      throw new HttpException('Error permanently deleting users', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 }

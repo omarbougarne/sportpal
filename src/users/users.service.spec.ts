@@ -83,7 +83,7 @@ describe('UsersService', () => {
     });
   });
 
-  describe('findUser', () => {
+  describe('findOne', () => {
     it('should find an already existing user', async () => {
       const email = 'john@mail.com';
       const user = {
@@ -97,7 +97,7 @@ describe('UsersService', () => {
         exec: jest.fn().mockResolvedValue(user),
       });
 
-      const result = await service.findUser(email);
+      const result = await service.findOne(email);
 
       expect(userModel.findOne).toHaveBeenCalledWith({ email });
       expect(result).toEqual(user);
@@ -110,7 +110,7 @@ describe('UsersService', () => {
         exec: jest.fn().mockResolvedValue(null),
       });
 
-      await expect(service.findUser(email)).rejects.toThrow('User with this email does not exist');
+      await expect(service.findOne(email)).rejects.toThrow('User with this email does not exist');
     });
   });
 });
