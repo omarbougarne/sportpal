@@ -9,6 +9,8 @@ import { UsersService } from './users/users.service';
 import * as cron from 'node-cron'
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './auth/common/guards/roles.guard';
+import { GroupModule } from './group/group.module';
+import { FroupService } from './froup/froup.service';
 
 @Module({
   imports: [
@@ -18,13 +20,15 @@ import { RolesGuard } from './auth/common/guards/roles.guard';
     }),
     MongooseModule.forRoot(process.env.MONGODB_URI),
       UsersModule,
-      AuthModule],
+      AuthModule,
+      GroupModule],
   controllers: [AppController],
   providers: [AppService,
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
     },
+    FroupService,
   ],
 })
 export class AppModule implements OnModuleInit {
