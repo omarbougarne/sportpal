@@ -1,37 +1,33 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from "@nestjs/class-validator";
+import { isArray, IsEmail, IsArray, IsOptional, IsString, MinLength } from "@nestjs/class-validator";
 import { Role } from '../enums/role.enum'
 export class UpdateUserDto{
     
     @IsOptional()
-    @IsNotEmpty()
     @IsString() 
     name: string;
     
     @IsOptional()
-    @IsNotEmpty()
     @IsString()
     @IsEmail()
     email: string;
     
     @IsOptional()
-    @IsNotEmpty()
     @IsString()
     @MinLength(6)
     password: string;
 
     @IsOptional()
-    @IsNotEmpty()
-    @IsString()
-  favoriteSports?: string[];
+    @IsArray()
+    @IsString({ each: true })
+    favoriteSports: string[];
 
-  @IsOptional()
-    @IsNotEmpty()
-    @IsString()
-  athleticLevel?: string;
+    @IsOptional()
+    @IsString({ each: true })
+    athleticLevel: string;
 
-  @IsOptional()
-    @IsNotEmpty()
+    @IsOptional()
+    @IsArray()
     @IsString()
-  disponsibility?: string[];
+    disponsibili: string[];
 
 }

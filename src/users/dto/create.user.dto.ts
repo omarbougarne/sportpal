@@ -1,6 +1,6 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength } from "@nestjs/class-validator";
+import { IsArray, IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from "@nestjs/class-validator";
 import { Role } from '../enums/role.enum'
-export class CreateUserDto{
+export class CreateUserDto {
 
     @IsNotEmpty()
     @IsString()
@@ -19,4 +19,18 @@ export class CreateUserDto{
     @IsNotEmpty()
     @IsString()
     role: Role;
+
+    @IsOptional()
+    @IsArray()
+    @IsString({ each: true })
+    favoriteSports: string[];
+
+    @IsOptional()
+    @IsString({ each: true })
+    athleticLevel: string;
+
+    @IsOptional()
+    @IsArray()
+    @IsString()
+    disponsibili: string[];
 }
