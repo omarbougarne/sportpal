@@ -36,6 +36,10 @@ export class UsersService {
       throw new HttpException('Error creating user', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
+  
+  async findAll(): Promise<User[]> {
+    return this.userModel.find().exec();
+  }
 
   async findUser(email: string): Promise<User | undefined> {
   
