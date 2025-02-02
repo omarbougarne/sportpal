@@ -14,6 +14,7 @@ export class Group {
 
     @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }], default: [] })
     members: Types.ObjectId[];
+
     @Prop({ required: false })
     sport?: string
 

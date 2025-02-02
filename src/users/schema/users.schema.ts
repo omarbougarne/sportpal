@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose'
+import { Document, Types } from 'mongoose'
 import { Role } from '../enums/role.enum'
 
 
@@ -30,6 +30,9 @@ export class User {
 
   @Prop({ type: [String], required: false })
   disponsibility?: string
+
+  @Prop({ type: [Types.ObjectId], ref: 'Group', default: [] })
+  groups: Types.ObjectId[]
 
   @Prop({ type: String, required: false })
   location?: string

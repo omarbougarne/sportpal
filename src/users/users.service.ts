@@ -1,10 +1,11 @@
 import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { User, UserDocument } from './schema/users.schema';
 import { CreateUserDto } from './dto/create.user.dto';
 import * as bcrypt from 'bcrypt';
 import { UpdateUserDto } from './dto/update.user.dto';
+import { Role } from './enums/role.enum';
 
 @Injectable()
 export class UsersService {
@@ -85,6 +86,22 @@ export class UsersService {
     } catch (error) {
       this.logger.error('Error finding user', error.stack)
       throw new HttpException('Error creating user', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async updateUserGroups(userId: string, groupId: Types.ObjectId, role: Role): Promise<{ data: User }> {
+    try {
+      const user = await this.userModel.findByIdAndUpdate(userId,
+        { $addToSet: { groups: groupId }, role },
+        { new: true }
+      ).exec();
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND)
+      }
+      return { data: user }
+    } catch (error) {
+      this.logger.error('Error Updating user groups', error.stack)
+      throw new HttpException('Error Updating user groups', HttpStatus.INTERNAL_SERVER_ERROR)
     }
   }
 
