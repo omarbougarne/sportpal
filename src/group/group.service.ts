@@ -2,25 +2,34 @@ import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Group, GroupDocument } from './schema/group.schema';
 import { Model, Types } from 'mongoose';
-import { group } from 'console';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { JoinGroupDto } from './dto/join-group.dto';
+import { UsersService } from 'src/users/users.service';
+import { Role } from 'src/users/enums/role.enum';
 
 @Injectable()
 export class GroupService {
     private readonly logger = new Logger(GroupService.name)
-    constructor(@InjectModel(Group.name) private groupModel: Model<GroupDocument>) { }
+    constructor(@InjectModel(Group.name) private groupModel: Model<GroupDocument>,
+        private usersService: UsersService
+    ) { }
 
-    async createGroup(creatGroupDto: CreateGroupDto): Promise<{ data: Group }> {
+    async createGroup(createGroupDto: CreateGroupDto, userId: string): Promise<{ data: Group }> {
         try {
-            const createGroup = new this.groupModel(creatGroupDto);
-            const savedGroup = await createGroup.save();
+            // Create the group
+            const createGroup = new this.groupModel(createGroupDto);
+            const savedGroup: GroupDocument = await createGroup.save();
+
+            await this.usersService.updateUserGroups(userId, savedGroup._id as Types.ObjectId, Role.Organizer);
+
             return { data: savedGroup };
         } catch (error) {
-            this.logger.error('Error creating group', error.stack)
-            throw new HttpException('Error creating group', HttpStatus.INTERNAL_SERVER_ERROR)
+            this.logger.error('Error creating group', error.stack);
+            throw new HttpException('Error creating group', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+
 
     async joinGroup(joinGroupDto: JoinGroupDto): Promise<{ data: Group }> {
         try {
