@@ -24,7 +24,7 @@ export class GroupService {
 
     async joinGroup(joinGroupDto: JoinGroupDto): Promise<{ data: Group }> {
         try {
-            const group = await this.groupModel.findById(joinGroupDto);
+            const group = await this.groupModel.findById(joinGroupDto.groupId).exec();
             if (!group) {
                 throw new HttpException('Group not found', HttpStatus.NOT_FOUND);
             }
