@@ -61,7 +61,7 @@ export class GroupService {
             throw new HttpException('Error fetching group by Id', HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
-
+    //update methods to fit patch instead of put
     async updateGroup(groupId: string, updateGroupDto: CreateGroupDto): Promise<{ data: Group }> {
         try {
             const updateGroup = await this.groupModel.findByIdAndUpdate(groupId, updateGroupDto, { new: true })
