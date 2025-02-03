@@ -88,4 +88,31 @@ export class GroupController {
         }
     }
 
+    @Delete(':groupId/members/:userId')
+    async removeMemberFromGroup(
+        @Param('groupId') groupId: string,
+        @Param('userId') userId: string,
+    ) {
+        try {
+            const result = await this.groupService.removeMemberFromGroup(groupId, userId);
+            return { status: HttpStatus.OK, data: result.data };
+        } catch (error) {
+            this.logger.error('Error in removeMemberFromGroup controller', error.stack);
+            throw new HttpException('Failed to remove member from group', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @Get(':groupId/members')
+    async listGroupMembers(@Param('groupId') groupId: string) {
+        try {
+            const result = await this.groupService.listGroupMembers(groupId);
+            return { status: HttpStatus.OK, members: result.members };
+        } catch (error) {
+            this.logger.error('Error in listGroupMembers controller', error.stack);
+            throw new HttpException('Failed to list group members', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+
+
 }
