@@ -7,6 +7,7 @@ import { JoinGroupDto } from './dto/join-group.dto';
 export class GroupController {
     constructor(private readonly groupService: GroupService) { }
 
+    //change to query decoretor
     @Post('create/:userId')
     async createGroup(@Param('userId') userId: string, @Body() createGroupDto: CreateGroupDto) {
         return this.groupService.createGroup(createGroupDto, userId);

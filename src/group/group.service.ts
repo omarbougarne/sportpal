@@ -125,8 +125,18 @@ export class GroupService {
 
             return { members: group.members }
         } catch (error) {
-            this.logger.error('Error fetching all groups', error.stack);
-            throw new HttpException('Error fetching all groups', HttpStatus.INTERNAL_SERVER_ERROR);
+            this.logger.error('Error listing group members', error.stack);
+            throw new HttpException('Error listing group members', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    async searchGroupsByName(name: string): Promise<{ data: Group[] }> {
+        try {
+            const groups = await this.groupModel.find({ name: RegExp(name, 'i') }).exec();
+            return { data: groups };
+        } catch (error) {
+            this.logger.error('Error searching groups by name', error.stack);
+            throw new HttpException('Error searching groups by name', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }
