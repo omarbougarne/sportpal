@@ -2,7 +2,6 @@ import { Controller, Post, Body, UseGuards, Req, Param } from '@nestjs/common';
 import { GroupService } from './group.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { JoinGroupDto } from './dto/join-group.dto';
-import { Request } from 'express';
 
 @Controller('groups')
 export class GroupController {
