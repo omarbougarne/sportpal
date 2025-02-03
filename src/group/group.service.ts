@@ -97,4 +97,22 @@ export class GroupService {
             throw new HttpException('Error fetching all groups', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    async removeMemberFromGroup(groupId: string, userId: string): Promise<{ data: Group }> {
+        try {
+            const group = await this.groupModel.findById(groupId);
+            if (!group) {
+                throw new HttpException('Group not found', HttpStatus.NOT_FOUND)
+            }
+
+            const memberId = new Types.ObjectId(userId);
+            group.members = group.members.filter(member => !member.equals(memberId));
+            group.save();
+
+            return { data: group }
+        } catch (error) {
+            this.logger.error('Error fetching all groups', error.stack);
+            throw new HttpException('Error fetching all groups', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }
