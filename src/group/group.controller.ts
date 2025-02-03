@@ -101,6 +101,7 @@ export class GroupController {
             throw new HttpException('Failed to remove member from group', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
     @Get(':groupId/members')
     async listGroupMembers(@Param('groupId') groupId: string) {
         try {
@@ -112,7 +113,15 @@ export class GroupController {
         }
     }
 
-
-
+    @Get('search')
+    async searchGroupsByName(@Query('name') name: string) {
+        try {
+            const result = await this.groupService.searchGroupsByName(name);
+            return { status: HttpStatus.OK, data: result.data };
+        } catch (error) {
+            this.logger.error('Error in searchGroupsByName controller', error.stack);
+            throw new HttpException('Failed to search groups', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
 }
