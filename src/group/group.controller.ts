@@ -114,9 +114,9 @@ export class GroupController {
     }
 
     @Get('search')
-    async searchGroupsByName(@Query('name') name: string) {
+    async searchGroupsByParam(@Query('name') name: string) {
         try {
-            const result = await this.groupService.searchGroupsByName(name);
+            const result = await this.groupService.searchGroupsByParam(name);
             return { status: HttpStatus.OK, data: result.data };
         } catch (error) {
             this.logger.error('Error in searchGroupsByName controller', error.stack);

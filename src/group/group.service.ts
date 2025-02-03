@@ -130,9 +130,16 @@ export class GroupService {
         }
     }
 
-    async searchGroupsByName(name: string): Promise<{ data: Group[] }> {
+    async searchGroupsByParam(searchTerm: string): Promise<{ data: Group[] }> {
         try {
-            const groups = await this.groupModel.find({ name: RegExp(name, 'i') }).exec();
+            const groups = await this.groupModel.find({
+                $or: [
+                    { name: RegExp(searchTerm, 'i') },
+                    { sport: RegExp(searchTerm, 'i') },
+                    { activity: RegExp(searchTerm, 'i') }
+                ]
+            }
+            ).exec();
             return { data: groups };
         } catch (error) {
             this.logger.error('Error searching groups by name', error.stack);
