@@ -3,7 +3,7 @@ import { Document, Types } from 'mongoose';
 import { Role } from '../enums/role.enum';
 import { Level } from '../enums/level.enum';
 import { Availability } from '../enums/availability.enum';
-import { GeoPoint } from '../types/geo-point.type';
+
 import { AccountStatus } from '../enums/account-status.enum';
 
 
