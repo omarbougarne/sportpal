@@ -10,18 +10,23 @@ import {
     HttpException,
     Logger,
     Query,
+    UseGuards,
 } from '@nestjs/common';
 import { GroupService } from './group.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { JoinGroupDto } from './dto/join-group.dto';
+import { RolesGuard } from '../auth/common/guards/roles.guard';
+import { Roles } from '../auth/common/decorators/roles.decorator';
+import { Role } from '../users/enums/role.enum';
 
 @Controller('groups')
+@UseGuards(RolesGuard)
 export class GroupController {
     private readonly logger = new Logger(GroupController.name)
     constructor(private readonly groupService: GroupService) { }
 
-    //change to query decoretor
     @Post()
+    @Roles(Role.Admin)
     async createGroup(@Body() createGroupDto: CreateGroupDto, @Query('userId') userId: string) {
         try {
             const result = await this.groupService.createGroup(createGroupDto, userId);
@@ -32,8 +37,8 @@ export class GroupController {
         }
     }
 
-
     @Post('join')
+    @Roles(Role.User)
     async joinGroup(@Body() joinGroupDto: JoinGroupDto) {
         try {
             const result = await this.groupService.joinGroup(joinGroupDto);
@@ -45,6 +50,7 @@ export class GroupController {
     }
 
     @Get(':id')
+    @Roles(Role.User)
     async getGroupById(@Param('id') groupId: string) {
         try {
             const group = await this.groupService.getGroupById(groupId)
@@ -54,8 +60,9 @@ export class GroupController {
             throw new HttpException('Failed to fetch group', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    //change later to patch method
+
     @Patch(':id')
+    @Roles(Role.Admin)
     async updateGroup(@Param('id') groupId: string, @Body() updateGroupDto: CreateGroupDto) {
         try {
             const group = await this.groupService.updateGroup(groupId, updateGroupDto)
@@ -67,6 +74,7 @@ export class GroupController {
     }
 
     @Delete(':id')
+    @Roles(Role.Admin)
     async deleteGroup(@Param('id') groupId: string, @Body() updateGroupDto: CreateGroupDto) {
         try {
             const group = await this.groupService.deleteGroup(groupId, updateGroupDto)
@@ -78,6 +86,7 @@ export class GroupController {
     }
 
     @Get('')
+    @Roles(Role.User)
     async getAllGroups() {
         try {
             const group = await this.groupService.getAllGroups()
@@ -89,6 +98,7 @@ export class GroupController {
     }
 
     @Delete(':groupId/members/:userId')
+    @Roles(Role.Admin)
     async removeMemberFromGroup(
         @Param('groupId') groupId: string,
         @Param('userId') userId: string,
@@ -103,6 +113,7 @@ export class GroupController {
     }
 
     @Get(':groupId/members')
+    @Roles(Role.User)
     async listGroupMembers(@Param('groupId') groupId: string) {
         try {
             const result = await this.groupService.listGroupMembers(groupId);
@@ -114,6 +125,7 @@ export class GroupController {
     }
 
     @Get('search')
+    @Roles(Role.User)
     async searchGroupsByParam(@Query('name') name: string) {
         try {
             const result = await this.groupService.searchGroupsByParam(name);
@@ -123,5 +135,4 @@ export class GroupController {
             throw new HttpException('Failed to search groups', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
 }
