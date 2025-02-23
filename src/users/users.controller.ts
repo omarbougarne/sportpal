@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards, HttpStatus, HttpException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create.user.dto';
 import { UpdateUserDto } from './dto/update.user.dto';
@@ -9,34 +9,60 @@ import { Roles } from 'src/auth/common/decorators/roles.decorator';
 @Controller('users')
 @UseGuards(RolesGuard)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Get()
   @Roles(Role.Admin)
-  findAll() {
-    
+  async findAll() {
+    try {
+      const result = await this.usersService.findAll();
+      return { status: HttpStatus.OK, data: result.data };
+    } catch (error) {
+      throw new HttpException('Failed to fetch users', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    
+  @Roles(Role.User)
+  async findOne(@Param('id') id: string) {
+    try {
+      const result = await this.usersService.findOne(id);
+      return { status: HttpStatus.OK, data: result.data };
+    } catch (error) {
+      throw new HttpException('Failed to fetch user', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @Post()
-  create() {
-    
-    
+  @Roles(Role.Admin)
+  async create(@Body() createUserDto: CreateUserDto) {
+    try {
+      const result = await this.usersService.create(createUserDto);
+      return { status: HttpStatus.CREATED, data: result.data };
+    } catch (error) {
+      throw new HttpException('Failed to create user', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @Patch(':id')
-  update(@Param('id') userId: string, @Body() updateUserDto: UpdateUserDto) {
-    
-    return this.usersService.updateUser(userId, updateUserDto);
+  @Roles(Role.Admin)
+  async update(@Param('id') userId: string, @Body() updateUserDto: UpdateUserDto) {
+    try {
+      const result = await this.usersService.updateUser(userId, updateUserDto);
+      return { status: HttpStatus.OK, data: result.data };
+    } catch (error) {
+      throw new HttpException('Failed to update user', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    
-    return this.usersService.sofDeleteUsers(id);
+  @Roles(Role.Admin)
+  async remove(@Param('id') id: string) {
+    try {
+      const result = await this.usersService.sofDeleteUsers(id);
+      return { status: HttpStatus.OK, data: result.data };
+    } catch (error) {
+      throw new HttpException('Failed to delete user', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 }
