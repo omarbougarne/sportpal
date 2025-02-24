@@ -10,10 +10,9 @@ import { Availability } from './enums/availability.enum';
 import { AccountStatus } from './enums/account-status.enum';
 import { HttpException, HttpStatus } from '@nestjs/common';
 
-
 describe('UsersService', () => {
     let service: UsersService;
-    let userModel: any
+    let userModel: any;
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -35,7 +34,7 @@ describe('UsersService', () => {
     });
 
     describe('create', () => {
-        it('Should create a user successfully', async () => {
+        it('should create a user successfully', async () => {
             const createUserDto: CreateUserDto = {
                 name: 'John Doe',
                 email: 'john.doe@example.com',
@@ -58,9 +57,18 @@ describe('UsersService', () => {
                 },
                 accountStatus: AccountStatus.Active,
             };
+
             jest.spyOn(userModel, 'findOne').mockResolvedValue(null);
             jest.spyOn(bcrypt, 'hash').mockResolvedValue('hashedPassword');
-            jest.spyOn(userModel.prototype, 'save').mockResolvedValue({
+            const saveMock = jest.fn().mockResolvedValue({
+                ...createUserDto,
+                password: 'hashedPassword',
+            });
+            userModel.mockImplementation(() => ({ save: saveMock }));
+
+            const result = await service.create(createUserDto);
+
+            expect(result.data).toEqual({
                 ...createUserDto,
                 password: 'hashedPassword',
             });
@@ -89,7 +97,9 @@ describe('UsersService', () => {
                 },
                 accountStatus: AccountStatus.Active,
             };
+
             jest.spyOn(userModel, 'findOne').mockResolvedValue(createUserDto);
+
             await expect(service.create(createUserDto)).rejects.toThrow(
                 new HttpException('User already exists', HttpStatus.CONFLICT),
             );
@@ -118,9 +128,12 @@ describe('UsersService', () => {
                 },
                 accountStatus: AccountStatus.Active,
             };
+
             jest.spyOn(userModel, 'findOne').mockResolvedValue(null);
             jest.spyOn(bcrypt, 'hash').mockResolvedValue('hashedPassword');
-            jest.spyOn(userModel.prototype, 'save').mockResolvedValue(new Error('Error creating user'));
+            const saveMock = jest.fn().mockRejectedValue(new Error('Error creating user'));
+            userModel.mockImplementation(() => ({ save: saveMock }));
+
             await expect(service.create(createUserDto)).rejects.toThrow(
                 new HttpException('Error creating user', HttpStatus.INTERNAL_SERVER_ERROR),
             );
