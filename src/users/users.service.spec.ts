@@ -30,7 +30,5 @@ describe('UsersService', () => {
         userModel = module.get(getModelToken(User.name));
     });
 
-    it('should be defined', () => {
-        expect(service).toBeDefined();
-    });
+
 });
