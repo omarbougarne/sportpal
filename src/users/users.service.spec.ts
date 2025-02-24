@@ -8,6 +8,7 @@ import * as bcrypt from 'bcrypt';
 import { Level } from './enums/level.enum';
 import { Availability } from './enums/availability.enum';
 import { AccountStatus } from './enums/account-status.enum';
+import { HttpException, HttpStatus } from '@nestjs/common';
 
 
 describe('UsersService', () => {
@@ -65,5 +66,64 @@ describe('UsersService', () => {
             });
         });
 
-    })
+        it('should throw an error if user already exists', async () => {
+            const createUserDto: CreateUserDto = {
+                name: 'John Doe',
+                email: 'john.doe@example.com',
+                password: 'securePassword123',
+                profileImageUrl: 'http://example.com/profile.jpg',
+                favoriteSports: ['Basketball', 'Soccer'],
+                level: Level.Intermediate,
+                availability: Availability.Evening,
+                role: Role.User,
+                preferences: {
+                    newsletter: true,
+                    notifications: {
+                        email: true,
+                        sms: false,
+                    },
+                },
+                contactInfo: {
+                    phone: '123-456-7890',
+                    address: '123 Main St, Anytown, USA',
+                },
+                accountStatus: AccountStatus.Active,
+            };
+            jest.spyOn(userModel, 'findOne').mockResolvedValue(createUserDto);
+            await expect(service.create(createUserDto)).rejects.toThrow(
+                new HttpException('User already exists', HttpStatus.CONFLICT),
+            );
+        });
+
+        it('should throw an error if there is an issue creating the user', async () => {
+            const createUserDto: CreateUserDto = {
+                name: 'John Doe',
+                email: 'john.doe@example.com',
+                password: 'securePassword123',
+                profileImageUrl: 'http://example.com/profile.jpg',
+                favoriteSports: ['Basketball', 'Soccer'],
+                level: Level.Intermediate,
+                availability: Availability.Evening,
+                role: Role.User,
+                preferences: {
+                    newsletter: true,
+                    notifications: {
+                        email: true,
+                        sms: false,
+                    },
+                },
+                contactInfo: {
+                    phone: '123-456-7890',
+                    address: '123 Main St, Anytown, USA',
+                },
+                accountStatus: AccountStatus.Active,
+            };
+            jest.spyOn(userModel, 'findOne').mockResolvedValue(null);
+            jest.spyOn(bcrypt, 'hash').mockResolvedValue('hashedPassword');
+            jest.spyOn(userModel.prototype, 'save').mockResolvedValue(new Error('Error creating user'));
+            await expect(service.create(createUserDto)).rejects.toThrow(
+                new HttpException('Error creating user', HttpStatus.INTERNAL_SERVER_ERROR),
+            );
+        });
+    });
 });
