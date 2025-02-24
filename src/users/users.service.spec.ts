@@ -62,7 +62,8 @@ describe('UsersService', () => {
             jest.spyOn(userModel.prototype, 'save').mockResolvedValue({
                 ...createUserDto,
                 password: 'hashedPassword',
-            })
-        })
+            });
+        });
+
     })
 });
