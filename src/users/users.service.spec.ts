@@ -57,6 +57,12 @@ describe('UsersService', () => {
                 },
                 accountStatus: AccountStatus.Active,
             };
+            jest.spyOn(userModel, 'findOne').mockResolvedValue(null);
+            jest.spyOn(bcrypt, 'hash').mockResolvedValue('hashedPassword');
+            jest.spyOn(userModel.prototype, 'save').mockResolvedValue({
+                ...createUserDto,
+                password: 'hashedPassword',
+            })
         })
     })
 });
