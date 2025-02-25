@@ -36,10 +36,10 @@ export class GroupController {
         }
     }
 
-    @Post('join/:groupId')
-    async joinGroup(@Param('groupId') groupId: string, @Body() joinGroupDto: JoinGroupDto) {
+    @Post('join')
+    async joinGroupByName(@Query('groupName') groupName: string, @Body() joinGroupDto: JoinGroupDto) {
         try {
-            const result = await this.groupService.joinGroup(groupId, joinGroupDto);
+            const result = await this.groupService.joinGroupByName(groupName, joinGroupDto);
             return { status: HttpStatus.OK, data: result.data };
         } catch (error) {
             this.logger.error('Error in joinGroup controller', error.stack);
