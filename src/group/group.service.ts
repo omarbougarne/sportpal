@@ -16,11 +16,9 @@ export class GroupService {
 
     async createGroup(createGroupDto: CreateGroupDto, userId: string): Promise<{ data: Group }> {
         try {
-            // Create the group
-            const createGroup = new this.groupModel(createGroupDto);
+            // Create the group with the organizer field
+            const createGroup = new this.groupModel({ ...createGroupDto, organizer: new Types.ObjectId(userId) });
             const savedGroup: GroupDocument = await createGroup.save();
-
-            await this.usersService.updateUserGroups(userId, savedGroup._id as Types.ObjectId, Role.Organizer);
 
             return { data: savedGroup };
         } catch (error) {
@@ -29,11 +27,9 @@ export class GroupService {
         }
     }
 
-
-
-    async joinGroup(joinGroupDto: JoinGroupDto): Promise<{ data: Group }> {
+    async joinGroup(groupId: string, joinGroupDto: JoinGroupDto): Promise<{ data: Group }> {
         try {
-            const group = await this.groupModel.findById(joinGroupDto.groupId).exec();
+            const group = await this.groupModel.findById(groupId).exec();
             if (!group) {
                 throw new HttpException('Group not found', HttpStatus.NOT_FOUND);
             }
@@ -45,7 +41,7 @@ export class GroupService {
             return { data: group }
         } catch (error) {
             this.logger.error('Error joining group', error.stack)
-            throw new HttpException('Error creating group', HttpStatus.INTERNAL_SERVER_ERROR)
+            throw new HttpException('Error joining group', HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
 
@@ -61,7 +57,7 @@ export class GroupService {
             throw new HttpException('Error fetching group by Id', HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
-    //update methods to fit patch instead of put
+
     async updateGroup(groupId: string, updateGroupDto: CreateGroupDto): Promise<{ data: Group }> {
         try {
             const updateGroup = await this.groupModel.findByIdAndUpdate(groupId, updateGroupDto, { new: true })
@@ -83,8 +79,8 @@ export class GroupService {
             }
             return { data: deleteGroup }
         } catch (error) {
-            this.logger.error('Error updating group', error.stack)
-            throw new HttpException('Error updating group', HttpStatus.INTERNAL_SERVER_ERROR);
+            this.logger.error('Error deleting group', error.stack)
+            throw new HttpException('Error deleting group', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -111,8 +107,8 @@ export class GroupService {
 
             return { data: group }
         } catch (error) {
-            this.logger.error('Error fetching all groups', error.stack);
-            throw new HttpException('Error fetching all groups', HttpStatus.INTERNAL_SERVER_ERROR);
+            this.logger.error('Error removing member from group', error.stack);
+            throw new HttpException('Error removing member from group', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

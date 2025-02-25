@@ -6,23 +6,24 @@ export type GroupDocument = Group & Document;
 @Schema({
     timestamps: true,
 })
-
 export class Group {
-
     @Prop({ required: true })
-    name: string
+    name: string;
 
     @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }], default: [] })
     members: Types.ObjectId[];
 
     @Prop({ required: false })
-    sport?: string
+    sport?: string;
 
     @Prop({ required: false })
-    activity?: string
+    activity?: string;
 
     @Prop({ required: true })
-    location: string
+    location: string;
+
+    @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+    organizer: Types.ObjectId;
 }
 
-export const GroupSchema = SchemaFactory.createForClass(Group)
+export const GroupSchema = SchemaFactory.createForClass(Group);

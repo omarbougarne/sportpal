@@ -6,16 +6,19 @@ export class CreateGroupDto {
     name: string;
 
     @IsOptional()
-    @IsNotEmpty()
     @IsString()
-    sport: string;
+    sport?: string;
 
     @IsOptional()
-    @IsNotEmpty()
     @IsString()
-    activity: string;
+    activity?: string;
 
     @IsNotEmpty()
     @IsString()
     location: string;
+
+
+    @IsNotEmpty()
+    @IsString()
+    organizer: string;
 }

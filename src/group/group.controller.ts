@@ -25,8 +25,7 @@ export class GroupController {
     private readonly logger = new Logger(GroupController.name)
     constructor(private readonly groupService: GroupService) { }
 
-    @Post()
-    @Roles(Role.Admin)
+    @Post('create/:id')
     async createGroup(@Body() createGroupDto: CreateGroupDto, @Query('userId') userId: string) {
         try {
             const result = await this.groupService.createGroup(createGroupDto, userId);
@@ -37,11 +36,10 @@ export class GroupController {
         }
     }
 
-    @Post('join')
-    @Roles(Role.User)
-    async joinGroup(@Body() joinGroupDto: JoinGroupDto) {
+    @Post('join/:groupId')
+    async joinGroup(@Param('groupId') groupId: string, @Body() joinGroupDto: JoinGroupDto) {
         try {
-            const result = await this.groupService.joinGroup(joinGroupDto);
+            const result = await this.groupService.joinGroup(groupId, joinGroupDto);
             return { status: HttpStatus.OK, data: result.data };
         } catch (error) {
             this.logger.error('Error in joinGroup controller', error.stack);
@@ -50,7 +48,6 @@ export class GroupController {
     }
 
     @Get(':id')
-    @Roles(Role.User)
     async getGroupById(@Param('id') groupId: string) {
         try {
             const group = await this.groupService.getGroupById(groupId)
@@ -62,7 +59,6 @@ export class GroupController {
     }
 
     @Patch(':id')
-    @Roles(Role.Admin)
     async updateGroup(@Param('id') groupId: string, @Body() updateGroupDto: CreateGroupDto) {
         try {
             const group = await this.groupService.updateGroup(groupId, updateGroupDto)
@@ -74,7 +70,6 @@ export class GroupController {
     }
 
     @Delete(':id')
-    @Roles(Role.Admin)
     async deleteGroup(@Param('id') groupId: string, @Body() updateGroupDto: CreateGroupDto) {
         try {
             const group = await this.groupService.deleteGroup(groupId, updateGroupDto)
@@ -86,7 +81,6 @@ export class GroupController {
     }
 
     @Get('')
-    @Roles(Role.User)
     async getAllGroups() {
         try {
             const group = await this.groupService.getAllGroups()
@@ -98,7 +92,6 @@ export class GroupController {
     }
 
     @Delete(':groupId/members/:userId')
-    @Roles(Role.Admin)
     async removeMemberFromGroup(
         @Param('groupId') groupId: string,
         @Param('userId') userId: string,
@@ -113,7 +106,6 @@ export class GroupController {
     }
 
     @Get(':groupId/members')
-    @Roles(Role.User)
     async listGroupMembers(@Param('groupId') groupId: string) {
         try {
             const result = await this.groupService.listGroupMembers(groupId);
@@ -125,7 +117,6 @@ export class GroupController {
     }
 
     @Get('search')
-    @Roles(Role.User)
     async searchGroupsByParam(@Query('name') name: string) {
         try {
             const result = await this.groupService.searchGroupsByParam(name);
