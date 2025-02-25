@@ -5,7 +5,6 @@ import { Model, Types } from 'mongoose';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { JoinGroupDto } from './dto/join-group.dto';
 import { UsersService } from 'src/users/users.service';
-import { Role } from 'src/users/enums/role.enum';
 
 @Injectable()
 export class GroupService {
