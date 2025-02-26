@@ -1,14 +1,14 @@
 
-import { Prop, Schema } from "@nestjs/mongoose"
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose"
 import { Types } from "mongoose"
 
 
-export type MessagesDocument = Message & Document
+export type MessagesDocument = Messages & Document
 
 @Schema({
     timestamps: true
 })
-export class Message {
+export class Messages {
     @Prop({ type: Types.ObjectId, ref: 'Group', required: true })
     groupId: Types.ObjectId;
 
@@ -18,3 +18,5 @@ export class Message {
     @Prop({ required: true })
     content: string;
 }
+
+export const MessagesSchema = SchemaFactory.createForClass(Messages);
