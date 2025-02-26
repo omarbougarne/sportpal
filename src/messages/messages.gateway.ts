@@ -19,16 +19,16 @@ export class MessageGateway {
     @SubscribeMessage('sendMessages')
     async handleMessages(@MessageBody() createMessagesDto: CreateMessageDto, @ConnectedSocket() client: Socket,): Promise<void> {
         const message = await this.messagesService.sendMessage(createMessagesDto);
-        this.server.to(message.groupId.toString()).emit('receiveMessage', message)
+        this.server.to(message.data.groupId.toString()).emit('receiveMessage', message)
     }
 
     @SubscribeMessage('sendMessages')
-    async handleJoinGroup(@MessageBody('groupId') groupId: string, @ConnectedSocket() client: Socket,): void {
+    async handleJoinGroup(@MessageBody('groupId') groupId: string, @ConnectedSocket() client: Socket,): Promise<void> {
         client.join(groupId)
     }
 
     @SubscribeMessage('sendMessages')
-    async handleLeaveGroup(@MessageBody('groupId') groupId: string, @ConnectedSocket() client: Socket,): void {
+    async handleLeaveGroup(@MessageBody('groupId') groupId: string, @ConnectedSocket() client: Socket,): Promise<void> {
         client.leave(groupId)
     }
 }
