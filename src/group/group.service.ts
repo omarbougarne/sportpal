@@ -142,4 +142,12 @@ export class GroupService {
             throw new HttpException('Error searching groups by name', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    async addMessageToGroup(groupId: string, messageId: Types.ObjectId): Promise<void> {
+        await this.groupModel.findByIdAndUpdate(
+            groupId,
+            { $push: { messages: messageId } },
+            { new: true }
+        );
+    }
 }

@@ -24,6 +24,9 @@ export class Group {
 
     @Prop({ type: Types.ObjectId, ref: 'User', required: true })
     organizer: Types.ObjectId;
+
+    @Prop({ type: [{ type: Types.ObjectId, ref: 'Message' }], default: [] })
+    messages: Types.ObjectId[];
 }
 
 export const GroupSchema = SchemaFactory.createForClass(Group);

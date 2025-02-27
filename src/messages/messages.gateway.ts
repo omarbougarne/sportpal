@@ -11,48 +11,95 @@ import { CreateMessageDto } from './dto/create-message.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Messages } from './schema/messages.schema';
-import { HttpStatus } from '@nestjs/common';
+import { HttpException, HttpStatus, Logger } from '@nestjs/common';
+import { GroupService } from 'src/group/group.service';
 
-@WebSocketGateway({ namespace: '/messages' })
+@WebSocketGateway({
+    namespace: '/messages',
+    cors: {
+        origin: process.env.CORS_ORIGIN,
+        methods: ['GET', 'POST']
+    },
+    pingInterval: 25000,
+    pingTimeout: 5000
+})
 export class MessageGateway {
-    @WebSocketServer()
-    server: Server;
+    @WebSocketServer() server: Server;
+    private logger = new Logger(MessageGateway.name);
 
     constructor(
-        private readonly messagesService: MessagesService,
-        @InjectModel(Messages.name) private messagesModel: Model<Messages>
+        private messagesService: MessagesService,
+        private groupService: GroupService
     ) { }
 
-    @SubscribeMessage('sendMessage')
-    async handleSendMessage(
-        @MessageBody() createMessageDto: CreateMessageDto,
-        @ConnectedSocket() client: Socket,
-    ): Promise<void> {
+    // Connection lifecycle management
+    async handleConnection(client: Socket) {
+        this.logger.log(`Client connected: ${client.id}`);
         try {
-            const message = await this.messagesService.sendMessage(createMessageDto);
-            this.server.to(createMessageDto.groupId.toString()).emit('receiveMessage', message);
+            const userId = await this.authenticateClient(client);
+            client.data.userId = userId;
+            client.emit('connection-success', { status: 'connected' });
         } catch (error) {
-            client.emit('messageError', {
-                status: error.status || HttpStatus.INTERNAL_SERVER_ERROR,
-                message: error.message || 'Failed to send message'
-            });
-            console.error('WebSocket Error:', error);
+            this.logger.error(`Connection failed: ${error.message}`);
+            client.disconnect(true);
         }
     }
 
-    @SubscribeMessage('joinGroup')
-    handleJoinGroup(
-        @MessageBody('groupId') groupId: string,
-        @ConnectedSocket() client: Socket,
-    ): void {
-        client.join(groupId);
+    handleDisconnect(client: Socket) {
+        this.logger.log(`Client disconnected: ${client.id}`);
     }
 
-    @SubscribeMessage('leaveGroup')
-    handleLeaveGroup(
-        @MessageBody('groupId') groupId: string,
+    private async authenticateClient(client: Socket): Promise<string> {
+        const authToken = client.handshake.headers.authorization?.split(' ')[1];
+        if (!authToken) throw new Error('Missing authentication token');
+
+        // Implement your actual authentication logic here
+        return 'authenticated-user-id';
+    }
+
+    @SubscribeMessage('joinGroup')
+    async handleJoinGroup(
         @ConnectedSocket() client: Socket,
-    ): void {
-        client.leave(groupId);
+        @MessageBody() { groupId }: { groupId: string }
+    ) {
+        try {
+            const group = await this.groupService.getGroupById(groupId);
+
+            if (!group.data.members.some(member => member.equals(client.data.userId))) {
+                throw new HttpException('Not a group member', HttpStatus.FORBIDDEN);
+            }
+
+            client.join(groupId);
+            client.emit('group-joined', { groupId });
+            this.logger.log(`User ${client.data.userId} joined group ${groupId}`);
+        } catch (error) {
+            this.handleError(client, error, 'join-group-error');
+        }
+    }
+
+    @SubscribeMessage('sendMessage')
+    async handleSendMessage(
+        @ConnectedSocket() client: Socket,
+        @MessageBody() createMessageDto: CreateMessageDto
+    ) {
+        try {
+            const message = await this.messagesService.sendMessage({
+                ...createMessageDto,
+                senderId: client.data.userId
+            });
+
+            this.server.to(createMessageDto.groupId).emit('newMessage', message.data);
+            this.logger.log(`Message sent to group ${createMessageDto.groupId}`);
+        } catch (error) {
+            this.handleError(client, error, 'message-error');
+        }
+    }
+
+    private handleError(client: Socket, error: Error, eventType: string) {
+        const status = error instanceof HttpException ? error.getStatus() : 500;
+        const message = error.message || 'Internal server error';
+
+        client.emit(eventType, { status, message });
+        this.logger.error(`Error: ${message}`, error.stack);
     }
 }
