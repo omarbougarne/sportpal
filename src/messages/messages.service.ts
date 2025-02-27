@@ -15,19 +15,34 @@ export class MessagesService {
     async sendMessage(createMessageDto: CreateMessageDto): Promise<{ data: Messages }> {
         try {
             const { groupId, senderId, content } = createMessageDto;
-            const group = await this.groupService.getGroupById(groupId)
-            if (!group.data.members.includes(new Types.ObjectId(senderId))) {
+
+
+            if (!groupId || !senderId || !content) {
+                throw new HttpException('Missing required fields', HttpStatus.BAD_REQUEST);
+            }
+
+            const group = await this.groupService.getGroupById(groupId);
+
+
+            if (!group?.data) {
+                throw new HttpException('Group not found', HttpStatus.NOT_FOUND);
+            }
+
+
+            if (!group.data.members.some(member => member.equals(senderId))) {
                 throw new HttpException('User not a member of the group', HttpStatus.FORBIDDEN);
             }
+
             const message = new this.messagesModel({
                 groupId: new Types.ObjectId(groupId),
                 senderId: new Types.ObjectId(senderId),
                 content,
             });
-            const savedMessage = await message.save();
-            return { data: savedMessage };
+
+            return { data: await message.save() };
         } catch (error) {
-            throw new HttpException('Error sending message', HttpStatus.INTERNAL_SERVER_ERROR);
+            console.error('Service Error:', error);
+            throw error;
         }
     }
 }

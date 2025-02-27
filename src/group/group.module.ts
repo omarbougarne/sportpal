@@ -11,6 +11,7 @@ import { User, UserSchema } from 'src/users/schema/users.schema';
     MongooseModule.forFeature([{ name: Group.name, schema: GroupSchema }, { name: User.name, schema: UserSchema }])
   ],
   providers: [GroupService, UsersService],
-  controllers: [GroupController]
+  controllers: [GroupController],
+  exports: [GroupService],
 })
 export class GroupModule { }
