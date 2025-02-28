@@ -65,7 +65,7 @@ export class MessageGateway {
         try {
             const group = await this.groupService.getGroupById(groupId);
 
-            if (!group.data.members.some(member => member.equals(client.data.userId))) {
+            if (!group.members.some(member => member.equals(client.data.userId))) {
                 throw new HttpException('Not a group member', HttpStatus.FORBIDDEN);
             }
 

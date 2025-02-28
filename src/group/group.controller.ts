@@ -29,7 +29,7 @@ export class GroupController {
     async createGroup(@Body() createGroupDto: CreateGroupDto, @Query('userId') userId: string) {
         try {
             const result = await this.groupService.createGroup(createGroupDto, userId);
-            return { status: HttpStatus.CREATED, data: result.data };
+            return result;
         } catch (error) {
             this.logger.error('Error in createGroup controller', error.stack);
             throw new HttpException('Failed to create group', HttpStatus.INTERNAL_SERVER_ERROR);
@@ -40,7 +40,7 @@ export class GroupController {
     async joinGroupByName(@Query('groupName') groupName: string, @Body() joinGroupDto: JoinGroupDto) {
         try {
             const result = await this.groupService.joinGroupByName(groupName, joinGroupDto);
-            return { status: HttpStatus.OK, data: result.data };
+            return result;
         } catch (error) {
             this.logger.error('Error in joinGroup controller', error.stack);
             throw new HttpException('Failed to join group', HttpStatus.INTERNAL_SERVER_ERROR);
@@ -50,8 +50,8 @@ export class GroupController {
     @Get(':id')
     async getGroupById(@Param('id') groupId: string) {
         try {
-            const group = await this.groupService.getGroupById(groupId)
-            return { status: HttpStatus.OK, data: group }
+            const group = await this.groupService.getGroupById(groupId);
+            return group;
         } catch (error) {
             this.logger.error('Error in getGroupById controller', error.stack);
             throw new HttpException('Failed to fetch group', HttpStatus.INTERNAL_SERVER_ERROR);
@@ -61,33 +61,33 @@ export class GroupController {
     @Patch(':id')
     async updateGroup(@Param('id') groupId: string, @Body() updateGroupDto: CreateGroupDto) {
         try {
-            const group = await this.groupService.updateGroup(groupId, updateGroupDto)
-            return { status: HttpStatus.OK, data: group }
+            const group = await this.groupService.updateGroup(groupId, updateGroupDto);
+            return group;
         } catch (error) {
             this.logger.error('Error in updateGroup controller', error.stack);
-            throw new HttpException('Failed to fetch group', HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new HttpException('Failed to update group', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Delete(':id')
     async deleteGroup(@Param('id') groupId: string, @Body() updateGroupDto: CreateGroupDto) {
         try {
-            const group = await this.groupService.deleteGroup(groupId, updateGroupDto)
-            return { status: HttpStatus.OK, data: group }
+            const group = await this.groupService.deleteGroup(groupId, updateGroupDto);
+            return group;
         } catch (error) {
             this.logger.error('Error in deleteGroup controller', error.stack);
-            throw new HttpException('Failed to fetch group', HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new HttpException('Failed to delete group', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Get('')
     async getAllGroups() {
         try {
-            const group = await this.groupService.getAllGroups()
-            return { status: HttpStatus.OK, data: group }
+            const groups = await this.groupService.getAllGroups();
+            return groups;
         } catch (error) {
             this.logger.error('Error in getAllGroups controller', error.stack);
-            throw new HttpException('Failed to fetch group', HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new HttpException('Failed to fetch groups', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -98,7 +98,7 @@ export class GroupController {
     ) {
         try {
             const result = await this.groupService.removeMemberFromGroup(groupId, userId);
-            return { status: HttpStatus.OK, data: result.data };
+            return result;
         } catch (error) {
             this.logger.error('Error in removeMemberFromGroup controller', error.stack);
             throw new HttpException('Failed to remove member from group', HttpStatus.INTERNAL_SERVER_ERROR);
@@ -108,8 +108,8 @@ export class GroupController {
     @Get(':groupId/members')
     async listGroupMembers(@Param('groupId') groupId: string) {
         try {
-            const result = await this.groupService.listGroupMembers(groupId);
-            return { status: HttpStatus.OK, members: result.members };
+            const members = await this.groupService.listGroupMembers(groupId);
+            return members;
         } catch (error) {
             this.logger.error('Error in listGroupMembers controller', error.stack);
             throw new HttpException('Failed to list group members', HttpStatus.INTERNAL_SERVER_ERROR);
@@ -119,8 +119,8 @@ export class GroupController {
     @Get('search')
     async searchGroupsByParam(@Query('name') name: string) {
         try {
-            const result = await this.groupService.searchGroupsByParam(name);
-            return { status: HttpStatus.OK, data: result.data };
+            const groups = await this.groupService.searchGroupsByParam(name);
+            return groups;
         } catch (error) {
             this.logger.error('Error in searchGroupsByName controller', error.stack);
             throw new HttpException('Failed to search groups', HttpStatus.INTERNAL_SERVER_ERROR);

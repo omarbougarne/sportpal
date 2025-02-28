@@ -52,7 +52,7 @@ export class MessagesService {
             throw new HttpException('Group not found', HttpStatus.NOT_FOUND);
         }
 
-        const isMember = group.data.members.some(member =>
+        const isMember = group.members.some(member =>
             member.equals(new Types.ObjectId(dto.senderId))
         );
         if (!isMember) {
