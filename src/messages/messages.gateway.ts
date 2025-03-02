@@ -13,6 +13,7 @@ import { Model } from 'mongoose';
 import { Messages } from './schema/messages.schema';
 import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { GroupService } from 'src/group/group.service';
+import { group } from 'console';
 
 @WebSocketGateway({
     namespace: '/messages',
@@ -60,9 +61,11 @@ export class MessageGateway {
     @SubscribeMessage('joinGroup')
     async handleJoinGroup(
         @ConnectedSocket() client: Socket,
-        @MessageBody() { groupId }: { groupId: string }
+        @MessageBody() data: any
     ) {
         try {
+            const { groupId } = JSON.parse(data)
+            const clientToken = client.handshake.headers.authorization?.split(' ')[1];
             const group = await this.groupService.getGroupById(groupId);
 
             if (!group.members.some(member => member.equals(client.data.userId))) {
@@ -80,16 +83,21 @@ export class MessageGateway {
     @SubscribeMessage('sendMessage')
     async handleSendMessage(
         @ConnectedSocket() client: Socket,
-        @MessageBody() createMessageDto: CreateMessageDto
+        @MessageBody() data: any
     ) {
         try {
-            const message = await this.messagesService.sendMessage({
-                ...createMessageDto,
-                senderId: client.data.userId
-            });
-
-            this.server.to(createMessageDto.groupId).emit('newMessage', message.data);
-            this.logger.log(`Message sent to group ${createMessageDto.groupId}`);
+            // const message = await this.messagesService.sendMessage({
+            //     ...createMessageDto,
+            //     senderId: client.data.userId
+            // });
+            const authToken = client.handshake.headers.authorization?.split(' ')[1];
+            const sender = "xxxxxx"
+            const { groupId, content } = JSON.parse(data)
+            console.log(groupId)
+            // console.log(data)
+            this.server.to(groupId).emit('message-received', { content });
+            // this.server.to(createMessageDto.groupId).emit('newMessage', message.data);
+            // this.logger.log(`Message sent to group ${createMessageDto.groupId}`);
         } catch (error) {
             this.handleError(client, error, 'message-error');
         }

@@ -1,6 +1,6 @@
 import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { isValidObjectId, Model, Types } from 'mongoose';
 import { User, UserDocument } from './schema/users.schema';
 import { CreateUserDto } from './dto/create.user.dto';
 import * as bcrypt from 'bcryptjs';
@@ -12,7 +12,7 @@ export class UsersService {
   private readonly logger = new Logger(UsersService.name)
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) { }
 
-  async create(createUserDto: CreateUserDto): Promise<{ data: User }> {
+  async create(createUserDto: CreateUserDto): Promise<UserDocument> {
     try {
       // Check if user already exists
       const existingUser = await this.userModel.findOne({ email: createUserDto.email }).exec();
@@ -31,90 +31,108 @@ export class UsersService {
       });
 
       const savedUser = await createUser.save()
-      return { data: savedUser };
+      return savedUser;
     } catch (error) {
       this.logger.error('Error creating user', error.stack)
       throw new HttpException('Error creating user', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
-  async findAll(): Promise<{ data: User[] }> {
+  async findAll(): Promise<User[]> {
     try {
       const users = await this.userModel.find().exec();
-      return { data: users }
+      return users;
     } catch (error) {
       this.logger.error('Error finding users', error.stack)
       throw new HttpException('Error finding users', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
-  async findOne(id: string): Promise<{ data: User }> {
+  async findById(id: string): Promise<UserDocument> {
     try {
-      const user = await this.userModel.findById(id).exec();
+      this.logger.log(`Received ID: ${id}`);
+      if (!isValidObjectId(id)) {
+        this.logger.error(`Invalid user ID format: ${id}`);
+        throw new HttpException('Invalid user ID format', HttpStatus.BAD_REQUEST);
+      }
+      const userId = new Types.ObjectId(id);
+      const user = await this.userModel.findById(userId).exec();
       if (!user) {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
-      return { data: user };
+      return user;
     } catch (error) {
-      this.logger.error('Error finding user', error.stack)
-      throw new HttpException('Error creating user', HttpStatus.INTERNAL_SERVER_ERROR);
+      this.logger.error('Error finding user', error.stack);
+      throw new HttpException('Error finding user', HttpStatus.INTERNAL_SERVER_ERROR);
     }
-
   }
-
-  async findByEmail(email: string): Promise<{ data: User }> {
+  // async findByEmail(email: string): Promise<UserDocument> {
+  //   return this.userModel.findOne({ email }).exec();
+  // }
+  async findByEmail(email: string): Promise<UserDocument> {
     try {
       const user = await this.userModel.findOne({ email }).exec();
       if (!user) {
         throw new HttpException('User with this email does not exist', HttpStatus.NOT_FOUND);
       }
-      return { data: user };
+      return user;
     } catch (error) {
-      this.logger.error('Error finding user', error.stack)
-      throw new HttpException('Error creating user', HttpStatus.INTERNAL_SERVER_ERROR);
+      this.logger.error('Error finding user', error.stack);
+      throw new HttpException('Error finding user', HttpStatus.INTERNAL_SERVER_ERROR);
     }
-
   }
 
-  async updateUser(userId: string, updateUserDto: UpdateUserDto): Promise<{ data: User }> {
+  async updateUser(userId: string, updateUserDto: UpdateUserDto): Promise<User> {
     try {
-      const user = await this.userModel.findByIdAndUpdate(userId, updateUserDto, { new: true }).exec();
+      if (!isValidObjectId(userId)) {
+        throw new HttpException('Invalid user ID format', HttpStatus.BAD_REQUEST);
+      }
+      const id = new Types.ObjectId(userId);
+      const user = await this.userModel.findByIdAndUpdate(id, updateUserDto, { new: true }).exec();
       if (!user) {
         throw new HttpException('User with this email does not exist', HttpStatus.NOT_FOUND);
       }
-      return { data: user };
+      return user;
     } catch (error) {
-      this.logger.error('Error finding user', error.stack)
-      throw new HttpException('Error creating user', HttpStatus.INTERNAL_SERVER_ERROR);
+      this.logger.error('Error updating user', error.stack);
+      throw new HttpException('Error updating user', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
-  async updateUserGroups(userId: string, groupId: Types.ObjectId, role: Role): Promise<{ data: User }> {
+  async updateUserGroups(userId: string, groupId: Types.ObjectId, role: Role): Promise<User> {
     try {
-      const user = await this.userModel.findByIdAndUpdate(userId,
+      if (!isValidObjectId(userId)) {
+        throw new HttpException('Invalid user ID format', HttpStatus.BAD_REQUEST);
+      }
+      const id = new Types.ObjectId(userId);
+      const user = await this.userModel.findByIdAndUpdate(id,
         { $addToSet: { groups: groupId }, role },
         { new: true }
       ).exec();
       if (!user) {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND)
       }
-      return { data: user }
+      return user;
     } catch (error) {
-      this.logger.error('Error Updating user groups', error.stack)
-      throw new HttpException('Error Updating user groups', HttpStatus.INTERNAL_SERVER_ERROR)
+      this.logger.error('Error updating user groups', error.stack)
+      throw new HttpException('Error updating user groups', HttpStatus.INTERNAL_SERVER_ERROR)
     }
   }
 
-  async sofDeleteUsers(userId: string): Promise<{ data: User }> {
+  async softDeleteUser(userId: string): Promise<User> {
     try {
-      const user = await this.userModel.findByIdAndUpdate(userId, { deletedAt: new Date }, { new: true }).exec();
+      if (!isValidObjectId(userId)) {
+        throw new HttpException('Invalid user ID format', HttpStatus.BAD_REQUEST);
+      }
+      const id = new Types.ObjectId(userId);
+      const user = await this.userModel.findByIdAndUpdate(id, { deletedAt: new Date() }, { new: true }).exec();
       if (!user) {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND)
       }
-      return { data: user };
+      return user;
     } catch (error) {
-      this.logger.error('Error finding user', error.stack)
-      throw new HttpException('Error creating user', HttpStatus.INTERNAL_SERVER_ERROR)
+      this.logger.error('Error soft deleting user', error.stack)
+      throw new HttpException('Error soft deleting user', HttpStatus.INTERNAL_SERVER_ERROR)
     }
   }
 
@@ -123,7 +141,7 @@ export class UsersService {
       const pastThirtyDays = new Date();
       pastThirtyDays.setDate(pastThirtyDays.getDate() - 30)
       const result = await this.userModel.deleteMany({ deletedAt: { $lte: pastThirtyDays } }).exec()
-      this.logger.log(`Premanently deleted ${result.deletedCount} users`)
+      this.logger.log(`Permanently deleted ${result.deletedCount} users`)
     } catch (error) {
       this.logger.error('Error permanently deleting users', error.stack);
       throw new HttpException('Error permanently deleting users', HttpStatus.INTERNAL_SERVER_ERROR);

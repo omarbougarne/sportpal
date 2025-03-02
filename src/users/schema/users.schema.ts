@@ -49,8 +49,7 @@ export class User {
   @Prop({ type: String, enum: AccountStatus, required: false })
   accountStatus?: AccountStatus;
 
-  @Prop({ type: Date, default: null })
-  deletedAt: Date | null;
+
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

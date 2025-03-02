@@ -4,8 +4,8 @@ import { Strategy, ExtractJwt } from "passport-jwt";
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy){
-    constructor(private configService: ConfigService){
+export class JwtStrategy extends PassportStrategy(Strategy) {
+    constructor(private configService: ConfigService) {
         const secret = configService.get<string>('JWT_SECRET');
         super({
             jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -13,7 +13,11 @@ export class JwtStrategy extends PassportStrategy(Strategy){
             secretOrKey: secret,
         })
     }
-    async validate(payload: any){
-        return {userId: payload.id, email: payload.email}        
+    // ✅ Correct
+    async validate(payload: any) {
+        return {
+            userId: payload.sub, // Matches the "sub" field in the JWT
+            email: payload.email
+        };
     }
 }
