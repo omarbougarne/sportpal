@@ -5,6 +5,7 @@ import { Level } from '../enums/level.enum';
 import { Availability } from '../enums/availability.enum';
 
 import { AccountStatus } from '../enums/account-status.enum';
+import { Sport } from '../enums/sport.enum';
 
 
 export type UserDocument = User & Document;
@@ -25,8 +26,8 @@ export class User {
   @Prop({ required: false })
   profileImageUrl?: string;
 
-  // @Prop({ type: [String], required: false })
-  // favoriteSports?: Sport[];
+  @Prop({ type: [String], required: false })
+  favoriteSports?: Sport[];
 
   @Prop({ type: String, enum: Level, required: false })
   level?: Level;
@@ -34,8 +35,8 @@ export class User {
   @Prop({ type: String, enum: Availability, required: false })
   availability?: Availability;
 
-  // @Prop({ type: GeoPoint, required: false })
-  // location?: GeoPoint;
+
+
 
   @Prop({ type: String, enum: Role, default: Role.User })
   role: Role;
