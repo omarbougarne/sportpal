@@ -36,8 +36,8 @@ export class GroupController {
         }
     }
 
-    @Post('join')
-    async joinGroupByName(@Query('groupName') groupName: string, @Body() joinGroupDto: JoinGroupDto) {
+    @Post(':groupName/join')
+    async joinGroupByName(@Param('groupName') groupName: string, @Body() joinGroupDto: JoinGroupDto) {
         try {
             const result = await this.groupService.joinGroupByName(groupName, joinGroupDto);
             return result;
