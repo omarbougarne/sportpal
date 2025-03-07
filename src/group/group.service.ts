@@ -150,4 +150,18 @@ export class GroupService {
             { new: true }
         );
     }
+
+    async getGroupsByMemberId(userId: string): Promise<Group[]> {
+        try {
+            const userObjectId = new Types.ObjectId(userId);
+            const groups = await this.groupModel.find({
+                members: { $in: [userObjectId] }
+            }).exec();
+
+            return groups;
+        } catch (error) {
+            this.logger.error(`Error fetching groups for member ${userId}`, error.stack);
+            throw new HttpException('Error fetching user groups', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

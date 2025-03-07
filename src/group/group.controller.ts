@@ -35,7 +35,16 @@ export class GroupController {
             throw new HttpException('Failed to create group', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
+    @Get('member/:userId')
+    async getGroupsByMemberId(@Param('userId') userId: string) {
+        try {
+            const groups = await this.groupService.getGroupsByMemberId(userId);
+            return groups;
+        } catch (error) {
+            this.logger.error('Error in getGroupsByMemberId controller', error.stack);
+            throw new HttpException('Failed to fetch user groups', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
     @Post(':groupName/join')
     async joinGroupByName(@Param('groupName') groupName: string, @Body() joinGroupDto: JoinGroupDto) {
         try {

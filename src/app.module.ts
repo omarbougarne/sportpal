@@ -11,6 +11,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './auth/common/guards/roles.guard';
 import { GroupModule } from './group/group.module';
 import { MessagesModule } from './messages/messages.module';
+import { LocationModule } from './location/location.module';
 
 @Module({
   imports: [
@@ -22,7 +23,8 @@ import { MessagesModule } from './messages/messages.module';
     UsersModule,
     AuthModule,
     GroupModule,
-    MessagesModule],
+    MessagesModule,
+    LocationModule],
   controllers: [AppController],
   providers: [AppService,
     {
