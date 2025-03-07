@@ -5,8 +5,6 @@ import { DifficultyLevel } from '../enums/difficulty-level.enum';
 
 export type WorkoutDocument = Workout & Document;
 
-
-
 export class Exercise {
     @Prop({ required: true })
     name: string;
@@ -21,10 +19,10 @@ export class Exercise {
     reps?: number;
 
     @Prop({ required: false })
-    duration?: number; // in seconds
+    duration?: number;
 
     @Prop({ required: false })
-    restTime?: number; // in seconds
+    restTime?: number;
 
     @Prop({ type: [String], required: false })
     imageUrls?: string[];
