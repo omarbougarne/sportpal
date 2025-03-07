@@ -14,6 +14,8 @@ import { MessagesModule } from './messages/messages.module';
 import { LocationModule } from './location/location.module';
 import { GeocodingService } from './geocoding/geocoding.service';
 import { GeocodingModule } from './geocoding/geocoding.module';
+import { WorkoutModule } from './workout/workout.module';
+// import { ZorkoutService } from './zorkout/zorkout.service';
 
 @Module({
   imports: [
@@ -27,7 +29,8 @@ import { GeocodingModule } from './geocoding/geocoding.module';
     GroupModule,
     MessagesModule,
     LocationModule,
-    GeocodingModule],
+    GeocodingModule,
+    WorkoutModule],
   controllers: [AppController],
   providers: [AppService,
     {
@@ -35,6 +38,7 @@ import { GeocodingModule } from './geocoding/geocoding.module';
       useClass: RolesGuard,
     },
     GeocodingService,
+
   ],
 })
 export class AppModule implements OnModuleInit {
