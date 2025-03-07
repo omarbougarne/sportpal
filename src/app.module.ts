@@ -12,6 +12,8 @@ import { RolesGuard } from './auth/common/guards/roles.guard';
 import { GroupModule } from './group/group.module';
 import { MessagesModule } from './messages/messages.module';
 import { LocationModule } from './location/location.module';
+import { GeocodingService } from './geocoding/geocoding.service';
+import { GeocodingModule } from './geocoding/geocoding.module';
 
 @Module({
   imports: [
@@ -24,13 +26,15 @@ import { LocationModule } from './location/location.module';
     AuthModule,
     GroupModule,
     MessagesModule,
-    LocationModule],
+    LocationModule,
+    GeocodingModule],
   controllers: [AppController],
   providers: [AppService,
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
     },
+    GeocodingService,
   ],
 })
 export class AppModule implements OnModuleInit {
