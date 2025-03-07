@@ -16,6 +16,7 @@ import { GeocodingService } from './geocoding/geocoding.service';
 import { GeocodingModule } from './geocoding/geocoding.module';
 import { WorkoutModule } from './workout/workout.module';
 // import { ZorkoutService } from './zorkout/zorkout.service';
+import { TrainerModule } from './trainer/trainer.module';
 
 @Module({
   imports: [
@@ -30,7 +31,8 @@ import { WorkoutModule } from './workout/workout.module';
     MessagesModule,
     LocationModule,
     GeocodingModule,
-    WorkoutModule],
+    WorkoutModule,
+    TrainerModule],
   controllers: [AppController],
   providers: [AppService,
     {

@@ -11,7 +11,11 @@ import { Role } from './enums/role.enum';
 export class UsersService {
   private readonly logger = new Logger(UsersService.name)
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) { }
-
+  async findOne(id: string): Promise<UserDocument> {
+    // const userId = new Types.ObjectId(id);
+    const user = await this.userModel.findOne({ id });
+    return user;
+  }
   async create(createUserDto: CreateUserDto): Promise<UserDocument> {
     try {
       // Check if user already exists
