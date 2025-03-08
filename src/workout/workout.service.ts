@@ -16,15 +16,26 @@ export class WorkoutService {
 
     async create(createWorkoutDto: CreateWorkoutDto): Promise<Workout> {
         try {
+            // Add debug logging
+            this.logger.log(`Creating workout with data: ${JSON.stringify(createWorkoutDto)}`);
+
+            // Validate that creator is valid ObjectId
+            if (!Types.ObjectId.isValid(createWorkoutDto.creator)) {
+                throw new HttpException('Invalid creator ID', HttpStatus.BAD_REQUEST);
+            }
+
             const createdWorkout = new this.workoutModel({
                 ...createWorkoutDto,
                 creator: new Types.ObjectId(createWorkoutDto.creator),
-                location: createWorkoutDto.location ? new Types.ObjectId(createWorkoutDto.location) : undefined,
+                location: createWorkoutDto.location && Types.ObjectId.isValid(createWorkoutDto.location)
+                    ? new Types.ObjectId(createWorkoutDto.location)
+                    : undefined,
             });
+
             return await createdWorkout.save();
         } catch (error) {
             this.logger.error(`Error creating workout: ${error.message}`, error.stack);
-            throw new HttpException('Error creating workout', HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new HttpException(`Error creating workout: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

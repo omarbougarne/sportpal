@@ -18,8 +18,14 @@ export class WorkoutController {
     @UseGuards(JwtAuthGuard)
     async create(@Body() createWorkoutDto: CreateWorkoutDto, @Request() req) {
         try {
+            // Debug logging
+            this.logger.log(`User from JWT token: ${JSON.stringify(req.user)}`);
+
             // Set the creator to the current user ID from the JWT token
             createWorkoutDto.creator = req.user.userId;
+
+            this.logger.log(`Sending workout data: ${JSON.stringify(createWorkoutDto)}`);
+
             return await this.workoutService.create(createWorkoutDto);
         } catch (error) {
             this.logger.error(`Error in create workout controller: ${error.message}`, error.stack);
