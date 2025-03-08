@@ -5,12 +5,14 @@ import { Model, Types } from 'mongoose';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { JoinGroupDto } from './dto/join-group.dto';
 import { UsersService } from 'src/users/users.service';
+import { LocationService } from 'src/location/location.service';
 
 @Injectable()
 export class GroupService {
     private readonly logger = new Logger(GroupService.name)
     constructor(@InjectModel(Group.name) private groupModel: Model<GroupDocument>,
-        private usersService: UsersService
+        private usersService: UsersService,
+        private locationService: LocationService
     ) { }
 
     async createGroup(createGroupDto: CreateGroupDto, userId: string): Promise<Group> {
@@ -162,6 +164,40 @@ export class GroupService {
         } catch (error) {
             this.logger.error(`Error fetching groups for member ${userId}`, error.stack);
             throw new HttpException('Error fetching user groups', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // In group.service.ts
+
+    // Find nearby groups
+    async findNearbyGroups(longitude: number, latitude: number, maxDistance: number = 5000): Promise<Group[]> {
+        try {
+            // First get the locationIds of nearby locations
+            const nearbyLocations = await this.locationService.findNearby(latitude, longitude, maxDistance);
+            const locationIds = nearbyLocations.map(loc => (loc as any)._id);
+
+            // Then find groups with those locations
+            return this.groupModel.find({
+                location: { $in: locationIds }
+            }).populate('organizer', 'name email profileImageUrl')
+                .exec();
+        } catch (error) {
+            throw new HttpException('Error finding nearby groups', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // Find groups near a user
+    async findGroupsNearUser(userId: string, maxDistance: number = 5000): Promise<Group[]> {
+        try {
+            const user = await this.usersService.findOne(userId);
+            if (!user || !user.location) {
+                throw new HttpException('User not found or has no location', HttpStatus.BAD_REQUEST);
+            }
+
+            const [longitude, latitude] = user.location.coordinates;
+            return this.findNearbyGroups(longitude, latitude, maxDistance);
+        } catch (error) {
+            throw new HttpException('Error finding groups near user', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

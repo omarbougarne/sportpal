@@ -6,11 +6,14 @@ import { CreateUserDto } from './dto/create.user.dto';
 import * as bcrypt from 'bcryptjs';
 import { UpdateUserDto } from './dto/update.user.dto';
 import { Role } from './enums/role.enum';
+import { GeocodingService } from 'src/geocoding/geocoding.service';
 
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name)
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) { }
+  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>,
+    private geocodingService: GeocodingService
+  ) { }
   async findOne(id: string): Promise<UserDocument> {
     // const userId = new Types.ObjectId(id);
     const user = await this.userModel.findOne({ id });
@@ -149,6 +152,87 @@ export class UsersService {
     } catch (error) {
       this.logger.error('Error permanently deleting users', error.stack);
       throw new HttpException('Error permanently deleting users', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  // In users.service.ts
+
+  // Update user location by address
+  async updateUserLocationByAddress(userId: string, addressData: any): Promise<User> {
+    try {
+      const { address, district, city, country } = addressData;
+
+      // Geocode address to coordinates
+      const addressToGeocode = [address, district, city, country]
+        .filter(Boolean)
+        .join(', ');
+
+      const { longitude, latitude } = await this.geocodingService.geocode(addressToGeocode);
+
+      // Update user with new location
+      return this.userModel.findByIdAndUpdate(
+        userId,
+        {
+          $set: {
+            location: {
+              type: 'Point',
+              coordinates: [longitude, latitude]
+            }
+          }
+        },
+        { new: true }
+      ).exec();
+    } catch (error) {
+      throw new HttpException('Error updating user location', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  // Update user location directly with coordinates
+  async updateUserLocation(userId: string, longitude: number, latitude: number): Promise<User> {
+    try {
+      return this.userModel.findByIdAndUpdate(
+        userId,
+        {
+          $set: {
+            location: {
+              type: 'Point',
+              coordinates: [longitude, latitude]
+            }
+          }
+        },
+        { new: true }
+      ).exec();
+    } catch (error) {
+      throw new HttpException('Error updating user location', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  // Find nearby users
+  async findNearbyUsers(userId: string, maxDistance: number = 5000, limit: number = 20): Promise<User[]> {
+    try {
+      const user = await this.userModel.findById(userId);
+      if (!user || !user.location) {
+        throw new HttpException('User not found or has no location', HttpStatus.BAD_REQUEST);
+      }
+
+      // Find users within radius excluding the requesting user
+      return this.userModel.find({
+        _id: { $ne: userId },
+        location: {
+          $near: {
+            $geometry: {
+              type: 'Point',
+              coordinates: user.location.coordinates
+            },
+            $maxDistance: maxDistance
+          }
+        }
+      })
+        .limit(limit)
+        .select('-password') // Exclude sensitive data
+        .exec();
+    } catch (error) {
+      throw new HttpException('Error finding nearby users', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }
