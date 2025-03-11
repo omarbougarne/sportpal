@@ -9,6 +9,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from 'src/users/schema/users.schema';
 import { UsersService } from 'src/users/users.service';
+import { GeocodingService } from 'src/geocoding/geocoding.service';
 
 @Module({
   imports: [
@@ -24,7 +25,7 @@ import { UsersService } from 'src/users/users.service';
     }),
     MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
   ],
-  providers: [AuthService, JwtStrategy, UsersService],
+  providers: [AuthService, JwtStrategy, UsersService, GeocodingService],
   controllers: [AuthController]
 })
-export class AuthModule {}
+export class AuthModule { }

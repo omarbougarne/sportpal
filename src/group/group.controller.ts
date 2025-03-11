@@ -11,6 +11,8 @@ import {
     Logger,
     Query,
     UseGuards,
+    Request
+
 } from '@nestjs/common';
 import { GroupService } from './group.service';
 import { CreateGroupDto } from './dto/create-group.dto';
@@ -18,6 +20,7 @@ import { JoinGroupDto } from './dto/join-group.dto';
 import { RolesGuard } from '../auth/common/guards/roles.guard';
 import { Roles } from '../auth/common/decorators/roles.decorator';
 import { Role } from '../users/enums/role.enum';
+import { JwtAuthGuard } from 'src/auth/common/guards/jwt-auth.guard';
 
 @Controller('groups')
 @UseGuards(RolesGuard)
@@ -134,5 +137,25 @@ export class GroupController {
             this.logger.error('Error in searchGroupsByName controller', error.stack);
             throw new HttpException('Failed to search groups', HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    // In groups.controller.ts
+
+    @Get('nearby')
+    async findNearbyGroups(
+        @Query('lng') longitude: number,
+        @Query('lat') latitude: number,
+        @Query('distance') maxDistance: number = 5000
+    ) {
+        return this.groupService.findNearbyGroups(longitude, latitude, maxDistance);
+    }
+
+    @Get('near-me')
+    @UseGuards(JwtAuthGuard)
+    async findGroupsNearMe(
+        @Request() req,
+        @Query('distance') maxDistance: number = 5000
+    ) {
+        return this.groupService.findGroupsNearUser(req.user.userId, maxDistance);
     }
 }

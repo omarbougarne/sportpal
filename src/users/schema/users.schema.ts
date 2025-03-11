@@ -66,7 +66,7 @@ export class User {
     coordinates: number[];
   };
 
-
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
+UserSchema.index({ location: '2dsphere' });

@@ -16,10 +16,10 @@ export class WorkoutService {
 
     async create(createWorkoutDto: CreateWorkoutDto): Promise<Workout> {
         try {
-            // Add debug logging
+
             this.logger.log(`Creating workout with data: ${JSON.stringify(createWorkoutDto)}`);
 
-            // Validate that creator is valid ObjectId
+
             if (!Types.ObjectId.isValid(createWorkoutDto.creator)) {
                 throw new HttpException('Invalid creator ID', HttpStatus.BAD_REQUEST);
             }
@@ -135,18 +135,18 @@ export class WorkoutService {
 
     async update(id: string, updateWorkoutDto: UpdateWorkoutDto, userId: string): Promise<Workout> {
         try {
-            // First check if the workout exists and belongs to this user
+
             const workout = await this.workoutModel.findById(id);
             if (!workout) {
                 throw new NotFoundException(`Workout with ID ${id} not found`);
             }
 
-            // Check if the user is the creator
+
             if (workout.creator.toString() !== userId) {
                 throw new ForbiddenException('You can only update your own workouts');
             }
 
-            // Convert string IDs to ObjectIds if present
+
             if (updateWorkoutDto.creator) {
                 updateWorkoutDto.creator = new Types.ObjectId(updateWorkoutDto.creator) as any;
             }
@@ -170,13 +170,13 @@ export class WorkoutService {
 
     async remove(id: string, userId: string): Promise<Workout> {
         try {
-            // First check if the workout exists and belongs to this user
+
             const workout = await this.workoutModel.findById(id);
             if (!workout) {
                 throw new NotFoundException(`Workout with ID ${id} not found`);
             }
 
-            // Check if the user is the creator
+
             if (workout.creator.toString() !== userId) {
                 throw new ForbiddenException('You can only delete your own workouts');
             }
