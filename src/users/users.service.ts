@@ -2,9 +2,9 @@ import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { isValidObjectId, Model, Types } from 'mongoose';
 import { User, UserDocument } from './schema/users.schema';
-import { CreateUserDto } from './dto/create.user.dto';
+import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcryptjs';
-import { UpdateUserDto } from './dto/update.user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { Role } from './enums/role.enum';
 import { GeocodingService } from 'src/geocoding/geocoding.service';
 
@@ -234,5 +234,12 @@ export class UsersService {
     } catch (error) {
       throw new HttpException('Error finding nearby users', HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+  async updateRole(userId: string, role: Role): Promise<User> {
+    return this.userModel.findByIdAndUpdate(
+      userId,
+      { role },
+      { new: true }
+    );
   }
 }

@@ -4,6 +4,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './schema/users.schema';
 import { UsersController } from './users.controller';
 import { GeocodingService } from 'src/geocoding/geocoding.service';
+import { JwtService } from '@nestjs/jwt';
 
 @Module({
   imports: [

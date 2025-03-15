@@ -7,10 +7,10 @@ import { CreateTrainerDto } from './dto/create-trainer.dto';
 import { UpdateTrainerDto } from './dto/update-trainer.dto';
 import { ReviewTrainerDto } from './dto/review-trainer.dto';
 import { QueryTrainerDto } from './dto/query-trainer.dto';
-import { JwtAuthGuard } from '../auth/common/guards/jwt-auth.guard';
-import { Roles } from '../auth/common/decorators/roles.decorator';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+// import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '../users/enums/role.enum';
-import { RolesGuard } from '../auth/common/guards/roles.guard';
+// import { RolesGuard } from '../common/guards/roles.guard';
 
 @Controller('trainers')
 export class TrainerController {
@@ -32,7 +32,29 @@ export class TrainerController {
             throw error;
         }
     }
-
+    @Post('become-trainer')
+    @UseGuards(JwtAuthGuard)
+    async becomeTrainer(
+        @Request() req,
+        @Body() createTrainerDto: CreateTrainerDto
+    ) {
+        try {
+            // Call the service method with user ID from JWT token
+            return await this.trainerService.becomeTrainer(
+                req.user.userId,
+                createTrainerDto
+            );
+        } catch (error) {
+            this.logger.error(`Error in becomeTrainer controller: ${error.message}`, error.stack);
+            throw error;
+        }
+    }
+    // @Post()
+    // @UseGuards(JwtAuthGuard, RolesGuard)
+    // @Roles(Role.ADMIN)
+    // async create(@Body() createTrainerDto: CreateTrainerDto) {
+    //     return this.trainerService.create(createTrainerDto);
+    // }
     @Get()
     async findAll(@Query() queryDto: QueryTrainerDto) {
         try {

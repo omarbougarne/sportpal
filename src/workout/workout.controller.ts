@@ -3,17 +3,21 @@ import { WorkoutService } from './workout.service';
 import { CreateWorkoutDto } from './dto/create-workout.dto';
 import { UpdateWorkoutDto } from './dto/update-workout.dto';
 import { QueryWorkoutDto } from './dto/query-workout.dto';
-import { JwtAuthGuard } from '../auth/common/guards/jwt-auth.guard';
-import { Roles } from '../auth/common/decorators/roles.decorator';
-import { Role } from '../users/enums/role.enum';
-import { RolesGuard } from '../auth/common/guards/roles.guard';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+// import { Roles } from '../common/decorators/roles.decorator';
+// import { Role } from '../users/enums/role.enum';
+// import { RolesGuard } from '../common/guards/roles.guard';
+import { ResourceOwnerGuard, CheckResourceOwnership, ResourceType } from '../common/guards/resource-owner.guard';
 
 @Controller('workouts')
 export class WorkoutController {
     private readonly logger = new Logger(WorkoutController.name);
 
     constructor(private readonly workoutService: WorkoutService) { }
-
+    @Get('test')
+    test() {
+        return { message: 'Auth controller is working' };
+    }
     @Post()
     @UseGuards(JwtAuthGuard)
     async create(@Body() createWorkoutDto: CreateWorkoutDto, @Request() req) {
@@ -65,7 +69,8 @@ export class WorkoutController {
     }
 
     @Patch(':id')
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, ResourceOwnerGuard)
+    @CheckResourceOwnership(ResourceType.WORKOUT)
     async update(@Param('id') id: string, @Body() updateWorkoutDto: UpdateWorkoutDto, @Request() req) {
         try {
             return await this.workoutService.update(id, updateWorkoutDto, req.user.userId);
@@ -76,7 +81,8 @@ export class WorkoutController {
     }
 
     @Delete(':id')
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, ResourceOwnerGuard)
+    @CheckResourceOwnership(ResourceType.WORKOUT)
     async remove(@Param('id') id: string, @Request() req) {
         try {
             return await this.workoutService.remove(id, req.user.userId);

@@ -7,6 +7,7 @@ import { UpdateTrainerDto } from './dto/update-trainer.dto';
 import { ReviewTrainerDto } from './dto/review-trainer.dto';
 import { QueryTrainerDto } from './dto/query-trainer.dto';
 import { UsersService } from '../users/users.service';
+import { Role } from 'src/users/enums/role.enum';
 
 @Injectable()
 export class TrainerService {
@@ -263,6 +264,43 @@ export class TrainerService {
             }
             this.logger.error(`Error adding workout to trainer: ${error.message}`, error.stack);
             throw new HttpException('Error adding workout to trainer', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    async becomeTrainer(userId: string, createTrainerDto: CreateTrainerDto): Promise<Trainer> {
+        try {
+            // Check if user exists
+            const user = await this.usersService.findOne(userId);
+            if (!user) {
+                throw new NotFoundException(`User with ID ${userId} not found`);
+            }
+
+            // Check if trainer profile already exists
+            const existingTrainer = await this.trainerModel.findOne({ userId: new Types.ObjectId(userId) }).exec();
+            if (existingTrainer) {
+                throw new ConflictException(`Trainer profile already exists for user ${userId}`);
+            }
+
+            // Update user role to TRAINER
+            await this.usersService.updateRole(userId, Role.Trainer);
+
+            // Create trainer profile
+            const createdTrainer = new this.trainerModel({
+                ...createTrainerDto,
+                userId: new Types.ObjectId(userId),
+                location: createTrainerDto.location ? new Types.ObjectId(createTrainerDto.location) : undefined,
+                averageRating: 0,
+                reviews: [],
+                workouts: [],
+            });
+
+            return await createdTrainer.save();
+        } catch (error) {
+            if (error instanceof NotFoundException || error instanceof ConflictException) {
+                throw error;
+            }
+            this.logger.error(`Error becoming trainer: ${error.message}`, error.stack);
+            throw new HttpException('Error becoming trainer', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

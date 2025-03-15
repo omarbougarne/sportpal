@@ -1,10 +1,10 @@
 import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards, HttpStatus, HttpException, Request } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create.user.dto';
-import { UpdateUserDto } from './dto/update.user.dto';
-import { Role } from './enums/role.enum';
-import { RolesGuard } from 'src/auth/common/guards/roles.guard';
-import { Roles } from 'src/auth/common/decorators/roles.decorator';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+// import { Role } from './enums/role.enum';
+import { RolesGuard } from '../common/guards/roles.guard';
+// import { Roles } from '../common/decorators/roles.decorator';
 import { AuthGuard } from '@nestjs/passport';
 
 @Controller('users')

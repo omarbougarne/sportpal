@@ -8,11 +8,12 @@ import { User, UserSchema } from 'src/users/schema/users.schema';
 import { Location, LocationSchema } from 'src/location/schema/location.schema';
 import { LocationService } from 'src/location/location.service';
 import { GeocodingService } from 'src/geocoding/geocoding.service';
+import { AuthModule } from 'src/auth/auth.module';
 // import { LocationSchema } from 'src/location/schema/location.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Group.name, schema: GroupSchema }, { name: User.name, schema: UserSchema }, { name: Group.name, schema: GroupSchema }, { name: Location.name, schema: LocationSchema }])
+    MongooseModule.forFeature([{ name: Group.name, schema: GroupSchema }, { name: User.name, schema: UserSchema }, { name: Group.name, schema: GroupSchema }, { name: Location.name, schema: LocationSchema }]), AuthModule
   ],
   providers: [GroupService, UsersService, LocationService, GeocodingService],
   controllers: [GroupController],

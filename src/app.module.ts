@@ -8,7 +8,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { UsersService } from './users/users.service';
 import * as cron from 'node-cron'
 import { APP_GUARD } from '@nestjs/core';
-import { RolesGuard } from './auth/common/guards/roles.guard';
+import { RolesGuard } from './common/guards/roles.guard';
 import { GroupModule } from './group/group.module';
 import { MessagesModule } from './messages/messages.module';
 import { LocationModule } from './location/location.module';
@@ -17,6 +17,8 @@ import { GeocodingModule } from './geocoding/geocoding.module';
 import { WorkoutModule } from './workout/workout.module';
 // import { ZorkoutService } from './zorkout/zorkout.service';
 import { TrainerModule } from './trainer/trainer.module';
+// import { ResourceOwnerGuard } from './auth/common/guards/resource-owner.guard';
+import { ResourceGuardModule } from './resource/resource.module';
 
 @Module({
   imports: [
@@ -32,15 +34,14 @@ import { TrainerModule } from './trainer/trainer.module';
     LocationModule,
     GeocodingModule,
     WorkoutModule,
-    TrainerModule],
+    TrainerModule,
+    ResourceGuardModule  // Add this line
+  ],
   controllers: [AppController],
-  providers: [AppService,
-    {
-      provide: APP_GUARD,
-      useClass: RolesGuard,
-    },
+  providers: [
+    AppService,
     GeocodingService,
-
+    RolesGuard,
   ],
 })
 export class AppModule implements OnModuleInit {
