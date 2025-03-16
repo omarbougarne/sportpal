@@ -13,6 +13,7 @@ import { AuthModule } from 'src/auth/auth.module';
     MongooseModule.forFeature([{ name: Trainer.name, schema: TrainerSchema }, { name: User.name, schema: UserSchema }]), AuthModule
   ],
   providers: [TrainerService, UsersService, GeocodingService],
-  controllers: [TrainerController]
+  controllers: [TrainerController],
+  exports: [TrainerService]
 })
 export class TrainerModule { }

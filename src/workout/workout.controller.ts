@@ -3,11 +3,11 @@ import { WorkoutService } from './workout.service';
 import { CreateWorkoutDto } from './dto/create-workout.dto';
 import { UpdateWorkoutDto } from './dto/update-workout.dto';
 import { QueryWorkoutDto } from './dto/query-workout.dto';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/common/guards/jwt-auth.guard';
 // import { Roles } from '../common/decorators/roles.decorator';
 // import { Role } from '../users/enums/role.enum';
 // import { RolesGuard } from '../common/guards/roles.guard';
-import { ResourceOwnerGuard, CheckResourceOwnership, ResourceType } from '../common/guards/resource-owner.guard';
+import { ResourceOwnerGuard, CheckResourceOwnership, ResourceType } from '../auth/common/guards/resource-owner.guard';
 
 @Controller('workouts')
 export class WorkoutController {

@@ -17,10 +17,10 @@ import {
 import { GroupService } from './group.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { JoinGroupDto } from './dto/join-group.dto';
-import { RolesGuard } from '../common/guards/roles.guard';
+import { RolesGuard } from '../auth/common/guards/roles.guard';
 // import { Roles } from '../auth/common/decorators/roles.decorator';
 // import { Role } from '../users/enums/role.enum';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/common/guards/jwt-auth.guard';
 
 @Controller('groups')
 @UseGuards(RolesGuard)

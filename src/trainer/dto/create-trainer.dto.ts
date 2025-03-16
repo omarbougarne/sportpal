@@ -40,6 +40,9 @@ export class CreateTrainerDto {
     userId: string;
 
     @IsString()
+    name: string;
+
+    @IsString()
     bio: string;
 
     @IsNumber()

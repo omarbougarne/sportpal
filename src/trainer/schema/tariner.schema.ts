@@ -53,6 +53,7 @@ export class TimeSlot {
     timestamps: true,
 })
 export class Trainer {
+    [x: string]: any;
     @Prop({ type: Types.ObjectId, ref: 'User', required: true, unique: true })
     userId: Types.ObjectId;
 
@@ -102,3 +103,5 @@ export const TrainerSchema = SchemaFactory.createForClass(Trainer);
 TrainerSchema.index({ userId: 1 });
 TrainerSchema.index({ specializations: 1 });
 TrainerSchema.index({ averageRating: -1 });
+
+// src/training-contract/schema/training-contract.schema.ts
