@@ -41,17 +41,22 @@ export class GroupController {
     //     }
     // }
     // In your controller
-    @Post('create/:id') // <-- Is this actually using a route param?
+    @Post('create')
+    @UseGuards(JwtAuthGuard)  // Add this line to require authentication
     async createGroup(
-        @Param('id') userId: string,  // <-- Check if this is how you're getting the ID
         @Body() createGroupDto: CreateGroupDto,
         @Request() req
     ) {
         try {
-            console.log('User ID from param:', userId);
-            console.log('Auth user:', req.user);
+            // Get user ID from authentication token
+            const userId = req.user.sub;  // Using .sub as that's what your JWT strategy provides
 
-            // Use proper ID source
+            if (!userId) {
+                throw new BadRequestException('User ID not found in authentication token');
+            }
+
+            console.log('Auth user ID:', userId);
+
             return await this.groupService.createGroup(createGroupDto, userId);
         } catch (error) {
             this.logger.error('Error in createGroup controller', error.stack);
@@ -78,6 +83,7 @@ export class GroupController {
             throw error;
         }
     }
+    // In your controller
     @Post(':groupName/join')
     @UseGuards(JwtAuthGuard)
     async joinGroupByName(
@@ -86,24 +92,34 @@ export class GroupController {
         @Request() req
     ) {
         try {
-            // First find the group by name
-            const group = await this.groupService.findGroupByName(groupName);
+            console.log('Auth user object:', req.user);
 
+            // CHANGE THIS LINE - Use req.user.sub instead of req.user.userId
+            if (!req.user || !req.user.sub) {
+                throw new BadRequestException('Authentication error: User ID not found');
+            }
+
+            console.log(`Attempting to join group: ${groupName}`);
+            console.log(`User ID: ${req.user.sub}`);
+
+            const group = await this.groupService.findGroupByName(groupName);
             if (!group) {
                 throw new NotFoundException(`Group "${groupName}" not found`);
             }
 
-            // Now call joinGroup with the correct parameters
-            return await this.groupService.joinGroup(
+            console.log(`Found group: ${group.name} with ID: ${(group as any)._id}`);
+
+            // CHANGE THIS LINE TOO - pass req.user.sub
+            const result = await this.groupService.joinGroup(
                 (group as any)._id.toString(),
-                req.user.userId // Get userId from the authenticated user
+                req.user.sub
             );
+
+            console.log(`Join operation completed, member count: ${result.members.length}`);
+            return result;
         } catch (error) {
-            this.logger.error('Error in joinGroup controller', error.stack);
-            if (error instanceof NotFoundException || error instanceof BadRequestException) {
-                throw error;
-            }
-            throw new HttpException('Failed to join group', HttpStatus.INTERNAL_SERVER_ERROR);
+            this.logger.error(`Error in joinGroupByName: ${error.message}`, error.stack);
+            throw error;
         }
     }
 

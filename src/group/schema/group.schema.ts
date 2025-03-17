@@ -1,10 +1,9 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { Schema as MongooseSchema } from "mongoose";
 import { Types, Document } from "mongoose";
-
+import { Location, LocationSchema } from "../../location/schema/location.schema";
 
 export class MemberInfo {
-
     @Prop({ type: MongooseSchema.Types.ObjectId, required: true })
     userId: Types.ObjectId;
 
@@ -13,7 +12,6 @@ export class MemberInfo {
 
     @Prop()
     profileImageUrl: string;
-
 }
 
 const MemberInfoSchema = SchemaFactory.createForClass(MemberInfo);
@@ -40,8 +38,20 @@ export class Group {
     @Prop({ required: false })
     activity?: string;
 
-    @Prop({ required: true })
-    location: string;
+    // Change location to support either a reference or embedded document
+    @Prop({
+        type: MongooseSchema.Types.Mixed,
+        required: true,
+        validate: {
+            validator: function (v) {
+                // Either an ObjectId or an object with required location fields
+                return Types.ObjectId.isValid(v) ||
+                    (v && v.coordinates && v.city);
+            },
+            message: 'Location must be either a valid location ID or a location object with coordinates and city'
+        }
+    })
+    location: Types.ObjectId | Location;
 
     @Prop({
         type: {

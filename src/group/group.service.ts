@@ -18,32 +18,60 @@ export class GroupService {
 
     async createGroup(createGroupDto: CreateGroupDto, userId: string): Promise<Group> {
         try {
+            this.logger.log(`Creating group "${createGroupDto.name}" for user ${userId}`);
 
+            // Get user info
             const user = await this.usersService.findById(userId);
             if (!user) {
                 throw new NotFoundException(`User with ID ${userId} not found`);
             }
 
+            // Validate location if needed
+            if (createGroupDto.location) {
+                // Check if it's an ObjectId string (reference to existing location)
+                if (Types.ObjectId.isValid(createGroupDto.location)) {
+                    // Verify the location exists in database
+                    const locationExists = await this.locationService.getLocationById(createGroupDto.location);
+                    if (!locationExists) {
+                        throw new NotFoundException(`Location with ID ${createGroupDto.location} not found`);
+                    }
+                }
+                // Otherwise, it should be an embedded location object (handled by schema validation)
+            }
 
+            // Create the group with user as organizer and first member
             const group = new this.groupModel({
                 ...createGroupDto,
                 organizer: {
                     userId: new Types.ObjectId(userId),
                     name: user.name,
-                    profileImageUrl: user.profileImageUrl
+                    profileImageUrl: user.profileImageUrl || ''
                 },
-
                 members: [{
                     userId: new Types.ObjectId(userId),
                     name: user.name,
-                    profileImageUrl: user.profileImageUrl
+                    profileImageUrl: user.profileImageUrl || ''
                 }]
             });
 
+            // Save and return the new group
             const savedGroup = await group.save();
+            this.logger.log(`Group "${savedGroup.name}" created with ID: ${savedGroup._id}`);
             return savedGroup;
         } catch (error) {
-            this.logger.error('Error creating group', error.stack);
+            this.logger.error(`Error creating group: ${error.message}`, error.stack);
+
+            // Better error handling based on error type
+            if (error instanceof NotFoundException) {
+                throw error;
+            }
+            if (error.name === 'ValidationError') {
+                throw new BadRequestException(`Validation error: ${error.message}`);
+            }
+            if (error.name === 'MongoServerError' && error.code === 11000) {
+                throw new HttpException('A group with this name already exists', HttpStatus.CONFLICT);
+            }
+
             throw new HttpException('Error creating group', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -58,36 +86,50 @@ export class GroupService {
         }
     }
 
+    // Update your group.service.ts joinGroup method
     async joinGroup(groupId: string, userId: string): Promise<Group> {
         try {
+            console.log(`Joining group: ${groupId} with user: ${userId}`); // Debug log
+
             const group = await this.groupModel.findById(groupId);
             if (!group) {
                 throw new NotFoundException(`Group with ID ${groupId} not found`);
             }
 
+            // Check if user is already a member - using toString() for safer comparison
+            const userObjectId = new Types.ObjectId(userId);
+            const isMember = group.members.some(member =>
+                member.userId.toString() === userObjectId.toString()
+            );
 
-            const isMember = group.members.some(member => member.userId.equals(new Types.ObjectId(userId)));
             if (isMember) {
+                console.log('User is already a member'); // Debug log
                 throw new BadRequestException('User is already a member of this group');
             }
 
-
+            // Get user info
             const user = await this.usersService.findById(userId);
             if (!user) {
                 throw new NotFoundException(`User with ID ${userId} not found`);
             }
 
-
+            // Add user to members
+            console.log('Adding member to group'); // Debug log
             group.members.push({
-                userId: new Types.ObjectId(userId),
+                userId: userObjectId,
                 name: user.name,
-                profileImageUrl: user.profileImageUrl
+                profileImageUrl: user.profileImageUrl || ''
             });
 
-            await group.save();
-            return group;
-        } catch (error) {
+            // Save with await - CRITICAL!
+            console.log('Saving group with new member'); // Debug log
+            const savedGroup = await group.save();
+            console.log(`Group saved with ${savedGroup.members.length} members`); // Confirm save
 
+            return savedGroup;
+        } catch (error) {
+            console.error('Error in joinGroup:', error); // Log full error
+            throw error;
         }
     }
 

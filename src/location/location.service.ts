@@ -11,7 +11,21 @@ export class LocationService {
         @InjectModel(Location.name) private locationModel: Model<LocationDocument>,
         private readonly geocodingService: GeocodingService,
     ) { }
-
+    async getLocationById(locationId: string): Promise<Location> {
+        try {
+            const location = await this.locationModel.findById(locationId).exec();
+            if (!location) {
+                throw new HttpException(`Location with ID ${locationId} not found`, HttpStatus.NOT_FOUND);
+            }
+            return location;
+        } catch (error) {
+            // If error is already an HttpException, rethrow it
+            if (error instanceof HttpException) {
+                throw error;
+            }
+            throw new HttpException('Error finding location', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
     async createLocation(createLocationDto: CreateLocationDto): Promise<Location> {
         try {
             // Combine address components for geocoding

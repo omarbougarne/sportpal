@@ -1,10 +1,27 @@
-import { Controller, Post, Get, Body, Query, Param } from '@nestjs/common';
+import { Controller, Post, Get, Body, Query, Param, NotFoundException, HttpException, HttpStatus } from '@nestjs/common';
 import { LocationService } from './location.service';
 import { CreateLocationDto } from './dto/create-location.dto';
 
 @Controller('locations')
 export class LocationController {
     constructor(private readonly locationService: LocationService) { }
+
+    // Add this new method to match your frontend API call
+    @Get(':id')
+    async getLocationById(@Param('id') id: string) {
+        try {
+            const location = await this.locationService.getLocationById(id);
+            if (!location) {
+                throw new NotFoundException(`Location with ID ${id} not found`);
+            }
+            return location;
+        } catch (error) {
+            if (error instanceof NotFoundException) {
+                throw error;
+            }
+            throw new HttpException('Error fetching location', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
     @Post()
     async createLocation(@Body() createLocationDto: CreateLocationDto) {

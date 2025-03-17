@@ -27,8 +27,12 @@ export class AuthService {
     }
 
     // ✅ Correct payload
+    // In auth.service.ts
     private generateToken(user: UserDocument): string {
-        const payload = { sub: user._id.toString() }; // sub = standardized JWT field for user ID
+        const payload = {
+            sub: user._id.toString(),
+            email: user.email
+        };
         return this.jwtService.sign(payload);
     }
 }
