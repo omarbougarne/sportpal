@@ -11,7 +11,9 @@ import {
     Logger,
     Query,
     UseGuards,
-    Request
+    Request,
+    NotFoundException,
+    BadRequestException
 
 } from '@nestjs/common';
 import { GroupService } from './group.service';
@@ -48,13 +50,41 @@ export class GroupController {
             throw new HttpException('Failed to fetch user groups', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    @Post(':groupName/join')
-    async joinGroupByName(@Param('groupName') groupName: string, @Body() joinGroupDto: JoinGroupDto) {
+    @Post(':id/leave')
+    @UseGuards(JwtAuthGuard)
+    async leaveGroup(@Param('id') groupId: string, @Request() req) {
         try {
-            const result = await this.groupService.joinGroupByName(groupName, joinGroupDto);
-            return result;
+            return await this.groupService.leaveGroup(groupId, req.user.userId);
+        } catch (error) {
+            this.logger.error(`Error leaving group: ${error.message}`, error.stack);
+            throw error;
+        }
+    }
+    @Post(':groupName/join')
+    @UseGuards(JwtAuthGuard)
+    async joinGroupByName(
+        @Param('groupName') groupName: string,
+        @Body() joinGroupDto: JoinGroupDto,
+        @Request() req
+    ) {
+        try {
+            // First find the group by name
+            const group = await this.groupService.findGroupByName(groupName);
+
+            if (!group) {
+                throw new NotFoundException(`Group "${groupName}" not found`);
+            }
+
+            // Now call joinGroup with the correct parameters
+            return await this.groupService.joinGroup(
+                (group as any)._id.toString(),
+                req.user.userId // Get userId from the authenticated user
+            );
         } catch (error) {
             this.logger.error('Error in joinGroup controller', error.stack);
+            if (error instanceof NotFoundException || error instanceof BadRequestException) {
+                throw error;
+            }
             throw new HttpException('Failed to join group', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -120,7 +150,7 @@ export class GroupController {
     @Get(':groupId/members')
     async listGroupMembers(@Param('groupId') groupId: string) {
         try {
-            const members = await this.groupService.listGroupMembers(groupId);
+            const members = await this.groupService.getGroupMembers(groupId);
             return members;
         } catch (error) {
             this.logger.error('Error in listGroupMembers controller', error.stack);

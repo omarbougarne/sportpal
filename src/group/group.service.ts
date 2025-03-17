@@ -1,5 +1,6 @@
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+
 import { Group, GroupDocument } from './schema/group.schema';
 import { Model, Types } from 'mongoose';
 import { CreateGroupDto } from './dto/create-group.dto';
@@ -27,23 +28,47 @@ export class GroupService {
             throw new HttpException('Error creating group', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
-    async joinGroupByName(groupName: string, joinGroupDto: JoinGroupDto): Promise<Group> {
+    // Add this method to group.service.ts
+    async findGroupByName(name: string): Promise<Group> {
         try {
-            const group = await this.groupModel.findOne({ name: groupName }).exec();
-            if (!group) {
-                throw new HttpException('Group not found', HttpStatus.NOT_FOUND);
-            }
-
-            const userId = new Types.ObjectId(joinGroupDto.userId);
-            if (!group.members.includes(userId)) {
-                group.members.push(userId);
-                await group.save();
-            }
+            const group = await this.groupModel.findOne({ name });
             return group;
         } catch (error) {
-            this.logger.error('Error joining group', error.stack);
-            throw new HttpException('Error joining group', HttpStatus.INTERNAL_SERVER_ERROR);
+            this.logger.error('Error finding group by name', error.stack);
+            throw new HttpException('Error finding group', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    // In group.service.ts
+    async joinGroup(groupId: string, userId: string): Promise<Group> {
+        try {
+            const group = await this.groupModel.findById(groupId);
+            if (!group) {
+                throw new NotFoundException(`Group with ID ${groupId} not found`);
+            }
+
+            // Check if user is already a member
+            const isMember = group.members.some(member => member.userId.equals(new Types.ObjectId(userId)));
+            if (isMember) {
+                throw new BadRequestException('User is already a member of this group');
+            }
+
+            // Get user info
+            const user = await this.usersService.findById(userId);
+            if (!user) {
+                throw new NotFoundException(`User with ID ${userId} not found`);
+            }
+
+            // Add user to members with name
+            group.members.push({
+                userId: new Types.ObjectId(userId),
+                name: user.name,
+                profileImageUrl: user.profileImageUrl
+            });
+
+            await group.save();
+            return group;
+        } catch (error) {
+            // Error handling...
         }
     }
 
@@ -104,7 +129,7 @@ export class GroupService {
             }
 
             const memberId = new Types.ObjectId(userId);
-            group.members = group.members.filter(member => !member.equals(memberId));
+            group.members = group.members.filter(member => !member.userId.equals(memberId));
             await group.save();
 
             return group;
@@ -114,18 +139,12 @@ export class GroupService {
         }
     }
 
-    async listGroupMembers(groupId: string): Promise<Types.ObjectId[]> {
-        try {
-            const group = await this.groupModel.findById(groupId);
-            if (!group) {
-                throw new HttpException('Group not found', HttpStatus.NOT_FOUND)
-            }
-
-            return group.members;
-        } catch (error) {
-            this.logger.error('Error listing group members', error.stack);
-            throw new HttpException('Error listing group members', HttpStatus.INTERNAL_SERVER_ERROR);
+    async getGroupMembers(groupId: string): Promise<Types.ObjectId[]> {
+        const group = await this.groupModel.findById(groupId);
+        if (!group) {
+            throw new NotFoundException(`Group with ID ${groupId} not found`);
         }
+        return group.members.map(member => member.userId);
     }
 
     async searchGroupsByParam(searchTerm: string): Promise<Group[]> {
@@ -198,6 +217,43 @@ export class GroupService {
             return this.findNearbyGroups(longitude, latitude, maxDistance);
         } catch (error) {
             throw new HttpException('Error finding groups near user', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    async leaveGroup(groupId: string, userId: string): Promise<Group> {
+        try {
+            const group = await this.groupModel.findById(groupId);
+            if (!group) {
+                throw new HttpException('Group not found', HttpStatus.NOT_FOUND);
+            }
+
+            const userObjectId = new Types.ObjectId(userId);
+
+            // Check if user is a member of the group
+            const isMember = group.members.some(member => member.userId.equals(userObjectId));
+            if (!isMember) {
+                throw new HttpException('User is not a member of this group', HttpStatus.BAD_REQUEST);
+            }
+
+            // Check if user is the organizer
+            if (group.organizer.equals(userObjectId)) {
+                throw new HttpException(
+                    'Organizers cannot leave their own group. Transfer ownership or delete the group instead.',
+                    HttpStatus.BAD_REQUEST
+                );
+            }
+
+            // Remove the user from the members array
+            group.members = group.members.filter(member => !member.userId.equals(userObjectId));
+            await group.save();
+
+            return group;
+        } catch (error) {
+            this.logger.error('Error leaving group', error.stack);
+            if (error instanceof HttpException) {
+                throw error;
+            }
+            throw new HttpException('Error leaving group', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

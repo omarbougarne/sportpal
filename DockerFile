@@ -1,0 +1,47 @@
+# Base image
+FROM node:20-alpine as development
+
+# Create app directory
+WORKDIR /usr/src/app
+
+# Copy package files
+COPY package*.json ./
+COPY pnpm-lock.yaml ./
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Install dependencies
+RUN pnpm install
+
+# Copy source code
+COPY . .
+
+# Build the application
+RUN pnpm run build
+
+# Production stage
+FROM node:20-alpine as production
+
+ARG NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV}
+
+WORKDIR /usr/src/app
+
+COPY package*.json ./
+COPY pnpm-lock.yaml ./
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Install only production dependencies
+RUN pnpm install --prod
+
+# Copy built assets from the development stage
+COPY --from=development /usr/src/app/dist ./dist
+
+# Expose API port
+EXPOSE 3000
+
+# Run the application
+CMD ["node", "dist/main"]
