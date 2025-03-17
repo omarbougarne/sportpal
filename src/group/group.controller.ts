@@ -30,14 +30,32 @@ export class GroupController {
     private readonly logger = new Logger(GroupController.name)
     constructor(private readonly groupService: GroupService) { }
 
-    @Post('create/:id')
-    async createGroup(@Body() createGroupDto: CreateGroupDto, @Query('userId') userId: string) {
+    // @Post('create/:id')
+    // async createGroup(@Body() createGroupDto: CreateGroupDto, @Query('userId') userId: string) {
+    //     try {
+    //         const result = await this.groupService.createGroup(createGroupDto, userId);
+    //         return result;
+    //     } catch (error) {
+    //         this.logger.error('Error in createGroup controller', error.stack);
+    //         throw new HttpException('Failed to create group', HttpStatus.INTERNAL_SERVER_ERROR);
+    //     }
+    // }
+    // In your controller
+    @Post('create/:id') // <-- Is this actually using a route param?
+    async createGroup(
+        @Param('id') userId: string,  // <-- Check if this is how you're getting the ID
+        @Body() createGroupDto: CreateGroupDto,
+        @Request() req
+    ) {
         try {
-            const result = await this.groupService.createGroup(createGroupDto, userId);
-            return result;
+            console.log('User ID from param:', userId);
+            console.log('Auth user:', req.user);
+
+            // Use proper ID source
+            return await this.groupService.createGroup(createGroupDto, userId);
         } catch (error) {
             this.logger.error('Error in createGroup controller', error.stack);
-            throw new HttpException('Failed to create group', HttpStatus.INTERNAL_SERVER_ERROR);
+            throw error;
         }
     }
     @Get('member/:userId')

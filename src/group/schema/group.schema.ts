@@ -2,8 +2,7 @@ import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { Schema as MongooseSchema } from "mongoose";
 import { Types, Document } from "mongoose";
 
-// Create interface for member info
-// Modify your MemberInfo interface to match the object structure you're using
+
 export class MemberInfo {
 
     @Prop({ type: MongooseSchema.Types.ObjectId, required: true })
@@ -45,12 +44,13 @@ export class Group {
     location: string;
 
     @Prop({
-        userId: { type: Types.ObjectId, ref: 'User', required: true },
-        name: { type: String, required: true },
-        profileImageUrl: { type: String }
+        type: {
+            userId: { type: MongooseSchema.Types.ObjectId, ref: 'User', required: true },
+            name: { type: String, required: true },
+            profileImageUrl: { type: String }
+        }
     })
     organizer: {
-        equals(userObjectId: Types.ObjectId): unknown;
         userId: Types.ObjectId;
         name: string;
         profileImageUrl?: string;

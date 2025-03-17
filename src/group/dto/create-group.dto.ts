@@ -18,7 +18,7 @@ export class CreateGroupDto {
     location: string;
 
 
-    @IsNotEmpty()
-    @IsString()
-    organizer: string;
+    // @IsNotEmpty()
+    // @IsString()
+    // organizer: string;
 }

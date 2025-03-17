@@ -10,14 +10,11 @@ import * as cron from 'node-cron'
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './auth/common/guards/roles.guard';
 import { GroupModule } from './group/group.module';
-import { MessagesModule } from './messages/messages.module';
 import { LocationModule } from './location/location.module';
 import { GeocodingService } from './geocoding/geocoding.service';
 import { GeocodingModule } from './geocoding/geocoding.module';
 import { WorkoutModule } from './workout/workout.module';
-// import { ZorkoutService } from './zorkout/zorkout.service';
 import { TrainerModule } from './trainer/trainer.module';
-// import { ResourceOwnerGuard } from './auth/common/guards/resource-owner.guard';
 import { ResourceGuardModule } from './resource/resource.module';
 import { ContractModule } from './contract/contract.module';
 
@@ -31,7 +28,6 @@ import { ContractModule } from './contract/contract.module';
     UsersModule,
     AuthModule,
     GroupModule,
-    MessagesModule,
     LocationModule,
     GeocodingModule,
     WorkoutModule,

@@ -18,17 +18,36 @@ export class GroupService {
 
     async createGroup(createGroupDto: CreateGroupDto, userId: string): Promise<Group> {
         try {
-            // Create the group with the organizer field
-            const createGroup = new this.groupModel({ ...createGroupDto, organizer: new Types.ObjectId(userId) });
-            const savedGroup: GroupDocument = await createGroup.save();
 
+            const user = await this.usersService.findById(userId);
+            if (!user) {
+                throw new NotFoundException(`User with ID ${userId} not found`);
+            }
+
+
+            const group = new this.groupModel({
+                ...createGroupDto,
+                organizer: {
+                    userId: new Types.ObjectId(userId),
+                    name: user.name,
+                    profileImageUrl: user.profileImageUrl
+                },
+
+                members: [{
+                    userId: new Types.ObjectId(userId),
+                    name: user.name,
+                    profileImageUrl: user.profileImageUrl
+                }]
+            });
+
+            const savedGroup = await group.save();
             return savedGroup;
         } catch (error) {
             this.logger.error('Error creating group', error.stack);
             throw new HttpException('Error creating group', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    // Add this method to group.service.ts
+
     async findGroupByName(name: string): Promise<Group> {
         try {
             const group = await this.groupModel.findOne({ name });
@@ -38,7 +57,7 @@ export class GroupService {
             throw new HttpException('Error finding group', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    // In group.service.ts
+
     async joinGroup(groupId: string, userId: string): Promise<Group> {
         try {
             const group = await this.groupModel.findById(groupId);
@@ -46,19 +65,19 @@ export class GroupService {
                 throw new NotFoundException(`Group with ID ${groupId} not found`);
             }
 
-            // Check if user is already a member
+
             const isMember = group.members.some(member => member.userId.equals(new Types.ObjectId(userId)));
             if (isMember) {
                 throw new BadRequestException('User is already a member of this group');
             }
 
-            // Get user info
+
             const user = await this.usersService.findById(userId);
             if (!user) {
                 throw new NotFoundException(`User with ID ${userId} not found`);
             }
 
-            // Add user to members with name
+
             group.members.push({
                 userId: new Types.ObjectId(userId),
                 name: user.name,
@@ -68,7 +87,7 @@ export class GroupService {
             await group.save();
             return group;
         } catch (error) {
-            // Error handling...
+
         }
     }
 
@@ -129,9 +148,12 @@ export class GroupService {
             }
 
             const memberId = new Types.ObjectId(userId);
-            group.members = group.members.filter(member => !member.userId.equals(memberId));
-            await group.save();
 
+
+
+            group.members = group.members.filter(member => !member.userId.equals(memberId));
+
+            await group.save();
             return group;
         } catch (error) {
             this.logger.error('Error removing member from group', error.stack);
@@ -186,16 +208,16 @@ export class GroupService {
         }
     }
 
-    // In group.service.ts
 
-    // Find nearby groups
+
+
     async findNearbyGroups(longitude: number, latitude: number, maxDistance: number = 5000): Promise<Group[]> {
         try {
-            // First get the locationIds of nearby locations
+
             const nearbyLocations = await this.locationService.findNearby(latitude, longitude, maxDistance);
             const locationIds = nearbyLocations.map(loc => (loc as any)._id);
 
-            // Then find groups with those locations
+
             return this.groupModel.find({
                 location: { $in: locationIds }
             }).populate('organizer', 'name email profileImageUrl')
@@ -205,7 +227,7 @@ export class GroupService {
         }
     }
 
-    // Find groups near a user
+
     async findGroupsNearUser(userId: string, maxDistance: number = 5000): Promise<Group[]> {
         try {
             const user = await this.usersService.findOne(userId);
@@ -229,21 +251,21 @@ export class GroupService {
 
             const userObjectId = new Types.ObjectId(userId);
 
-            // Check if user is a member of the group
+
             const isMember = group.members.some(member => member.userId.equals(userObjectId));
             if (!isMember) {
                 throw new HttpException('User is not a member of this group', HttpStatus.BAD_REQUEST);
             }
 
-            // Check if user is the organizer
-            if (group.organizer.equals(userObjectId)) {
+
+            if (group.organizer.userId.equals(userObjectId)) {
                 throw new HttpException(
                     'Organizers cannot leave their own group. Transfer ownership or delete the group instead.',
                     HttpStatus.BAD_REQUEST
                 );
             }
 
-            // Remove the user from the members array
+
             group.members = group.members.filter(member => !member.userId.equals(userObjectId));
             await group.save();
 
