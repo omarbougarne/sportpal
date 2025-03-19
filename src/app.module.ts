@@ -10,9 +10,9 @@ import * as cron from 'node-cron'
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './auth/common/guards/roles.guard';
 import { GroupModule } from './group/group.module';
-import { LocationModule } from './location/location.module';
-import { GeocodingService } from './geocoding/geocoding.service';
-import { GeocodingModule } from './geocoding/geocoding.module';
+// import { LocationModule } from './location/location.module';
+// import { GeocodingService } from './geocoding/geocoding.service';
+// import { GeocodingModule } from './geocoding/geocoding.module';
 import { WorkoutModule } from './workout/workout.module';
 import { TrainerModule } from './trainer/trainer.module';
 import { ResourceGuardModule } from './resource/resource.module';
@@ -28,8 +28,8 @@ import { ContractModule } from './contract/contract.module';
     UsersModule,
     AuthModule,
     GroupModule,
-    LocationModule,
-    GeocodingModule,
+    // LocationModule,
+    // GeocodingModule,
     WorkoutModule,
     TrainerModule,
     ResourceGuardModule,
@@ -38,7 +38,7 @@ import { ContractModule } from './contract/contract.module';
   controllers: [AppController],
   providers: [
     AppService,
-    GeocodingService,
+    // GeocodingService,
     RolesGuard,
   ],
 })

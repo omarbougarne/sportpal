@@ -6,13 +6,13 @@ import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcryptjs';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Role } from './enums/role.enum';
-import { GeocodingService } from 'src/geocoding/geocoding.service';
+// import { GeocodingService } from 'src/geocoding/geocoding.service';
 
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name)
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>,
-    private geocodingService: GeocodingService
+    // private geocodingService: GeocodingService
   ) { }
   async findOne(id: string): Promise<UserDocument> {
     // const userId = new Types.ObjectId(id);
@@ -155,39 +155,7 @@ export class UsersService {
     }
   }
 
-  // In users.service.ts
 
-  // Update user location by address
-  async updateUserLocationByAddress(userId: string, addressData: any): Promise<User> {
-    try {
-      const { address, district, city, country } = addressData;
-
-      // Geocode address to coordinates
-      const addressToGeocode = [address, district, city, country]
-        .filter(Boolean)
-        .join(', ');
-
-      const { longitude, latitude } = await this.geocodingService.geocode(addressToGeocode);
-
-      // Update user with new location
-      return this.userModel.findByIdAndUpdate(
-        userId,
-        {
-          $set: {
-            location: {
-              type: 'Point',
-              coordinates: [longitude, latitude]
-            }
-          }
-        },
-        { new: true }
-      ).exec();
-    } catch (error) {
-      throw new HttpException('Error updating user location', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  // Update user location directly with coordinates
   async updateUserLocation(userId: string, longitude: number, latitude: number): Promise<User> {
     try {
       return this.userModel.findByIdAndUpdate(

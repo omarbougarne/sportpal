@@ -205,21 +205,21 @@ export class GroupController {
 
     // In groups.controller.ts
 
-    @Get('nearby')
-    async findNearbyGroups(
-        @Query('lng') longitude: number,
-        @Query('lat') latitude: number,
-        @Query('distance') maxDistance: number = 5000
-    ) {
-        return this.groupService.findNearbyGroups(longitude, latitude, maxDistance);
-    }
+    // @Get('nearby')
+    // async findNearbyGroups(
+    //     @Query('lng') longitude: number,
+    //     @Query('lat') latitude: number,
+    //     @Query('distance') maxDistance: number = 5000
+    // ) {
+    //     return this.groupService.findNearbyGroups(longitude, latitude, maxDistance);
+    // }
 
-    @Get('near-me')
-    @UseGuards(JwtAuthGuard)
-    async findGroupsNearMe(
-        @Request() req,
-        @Query('distance') maxDistance: number = 5000
-    ) {
-        return this.groupService.findGroupsNearUser(req.user.userId, maxDistance);
-    }
+    // @Get('near-me')
+    // @UseGuards(JwtAuthGuard)
+    // async findGroupsNearMe(
+    //     @Request() req,
+    //     @Query('distance') maxDistance: number = 5000
+    // ) {
+    //     return this.groupService.findGroupsNearUser(req.user.userId, maxDistance);
+    // }
 }
