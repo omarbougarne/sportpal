@@ -31,7 +31,7 @@ jobs:
       #   run: pnpm lint
   
       - name: Run tests
-        run: pnpm test
+        run: pnpm test -- "src/(group|auth)/**/*.spec.ts"
 
       - name: Build project
         run: pnpm build

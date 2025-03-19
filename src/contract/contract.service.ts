@@ -154,4 +154,10 @@ export class ContractService {
             throw new HttpException('Error adding workout to contract', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    async findAll(): Promise<Contract[]> {
+        return this.contractModel.find()
+            .populate('trainerId')
+            .populate('clientId')
+            .exec();
+    }
 }
