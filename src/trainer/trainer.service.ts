@@ -7,7 +7,7 @@ import { UpdateTrainerDto } from './dto/update-trainer.dto';
 import { ReviewTrainerDto } from './dto/review-trainer.dto';
 import { QueryTrainerDto } from './dto/query-trainer.dto';
 import { UsersService } from '../users/users.service';
-import { Role } from 'src/users/enums/role.enum';
+import { Role } from '../users/enums/role.enum';
 
 @Injectable()
 export class TrainerService {
