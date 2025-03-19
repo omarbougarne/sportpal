@@ -16,6 +16,6 @@ import { AuthModule } from 'src/auth/auth.module';
   ],
   providers: [ContractService],
   controllers: [ContractController],
-  exports: [ContractService]  // Export if needed by other modules
+  exports: [ContractService]
 })
 export class ContractModule { }

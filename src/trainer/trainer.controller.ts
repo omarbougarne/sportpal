@@ -8,9 +8,7 @@ import { UpdateTrainerDto } from './dto/update-trainer.dto';
 import { ReviewTrainerDto } from './dto/review-trainer.dto';
 import { QueryTrainerDto } from './dto/query-trainer.dto';
 import { JwtAuthGuard } from '../auth/common/guards/jwt-auth.guard';
-// import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '../users/enums/role.enum';
-// import { RolesGuard } from '../common/guards/roles.guard';
 
 @Controller('trainers')
 export class TrainerController {
