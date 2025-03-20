@@ -20,8 +20,6 @@ import { GroupService } from './group.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { JoinGroupDto } from './dto/join-group.dto';
 import { RolesGuard } from '../auth/common/guards/roles.guard';
-// import { Roles } from '../auth/common/decorators/roles.decorator';
-// import { Role } from '../users/enums/role.enum';
 import { JwtAuthGuard } from '../auth/common/guards/jwt-auth.guard';
 
 @Controller('groups')
@@ -30,33 +28,19 @@ export class GroupController {
     private readonly logger = new Logger(GroupController.name)
     constructor(private readonly groupService: GroupService) { }
 
-    // @Post('create/:id')
-    // async createGroup(@Body() createGroupDto: CreateGroupDto, @Query('userId') userId: string) {
-    //     try {
-    //         const result = await this.groupService.createGroup(createGroupDto, userId);
-    //         return result;
-    //     } catch (error) {
-    //         this.logger.error('Error in createGroup controller', error.stack);
-    //         throw new HttpException('Failed to create group', HttpStatus.INTERNAL_SERVER_ERROR);
-    //     }
-    // }
-    // In your controller
     @Post('create')
-    @UseGuards(JwtAuthGuard)  // Add this line to require authentication
+    @UseGuards(JwtAuthGuard)
     async createGroup(
         @Body() createGroupDto: CreateGroupDto,
         @Request() req
     ) {
         try {
-            // Get user ID from authentication token
-            const userId = req.user.sub;  // Using .sub as that's what your JWT strategy provides
+            const userId = req.user.sub;
 
             if (!userId) {
                 throw new BadRequestException('User ID not found in authentication token');
             }
-
             console.log('Auth user ID:', userId);
-
             return await this.groupService.createGroup(createGroupDto, userId);
         } catch (error) {
             this.logger.error('Error in createGroup controller', error.stack);
@@ -83,7 +67,7 @@ export class GroupController {
             throw error;
         }
     }
-    // In your controller
+
     @Post(':groupName/join')
     @UseGuards(JwtAuthGuard)
     async joinGroupByName(
@@ -93,12 +77,9 @@ export class GroupController {
     ) {
         try {
             console.log('Auth user object:', req.user);
-
-            // CHANGE THIS LINE - Use req.user.sub instead of req.user.userId
             if (!req.user || !req.user.sub) {
                 throw new BadRequestException('Authentication error: User ID not found');
             }
-
             console.log(`Attempting to join group: ${groupName}`);
             console.log(`User ID: ${req.user.sub}`);
 
@@ -106,10 +87,7 @@ export class GroupController {
             if (!group) {
                 throw new NotFoundException(`Group "${groupName}" not found`);
             }
-
             console.log(`Found group: ${group.name} with ID: ${(group as any)._id}`);
-
-            // CHANGE THIS LINE TOO - pass req.user.sub
             const result = await this.groupService.joinGroup(
                 (group as any)._id.toString(),
                 req.user.sub
@@ -203,23 +181,23 @@ export class GroupController {
         }
     }
 
-    // In groups.controller.ts
 
-    // @Get('nearby')
-    // async findNearbyGroups(
-    //     @Query('lng') longitude: number,
-    //     @Query('lat') latitude: number,
-    //     @Query('distance') maxDistance: number = 5000
-    // ) {
-    //     return this.groupService.findNearbyGroups(longitude, latitude, maxDistance);
-    // }
 
-    // @Get('near-me')
-    // @UseGuards(JwtAuthGuard)
-    // async findGroupsNearMe(
-    //     @Request() req,
-    //     @Query('distance') maxDistance: number = 5000
-    // ) {
-    //     return this.groupService.findGroupsNearUser(req.user.userId, maxDistance);
-    // }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }

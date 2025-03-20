@@ -7,7 +7,6 @@ import { JwtAuthGuard } from '../auth/common/guards/jwt-auth.guard';
 // import { Roles } from '../common/decorators/roles.decorator';
 // import { Role } from '../users/enums/role.enum';
 // import { RolesGuard } from '../common/guards/roles.guard';
-import { ResourceOwnerGuard, CheckResourceOwnership, ResourceType } from '../auth/common/guards/resource-owner.guard';
 
 @Controller('workouts')
 export class WorkoutController {
@@ -69,8 +68,7 @@ export class WorkoutController {
     }
 
     @Patch(':id')
-    @UseGuards(JwtAuthGuard, ResourceOwnerGuard)
-    @CheckResourceOwnership(ResourceType.WORKOUT)
+    @UseGuards(JwtAuthGuard)
     async update(@Param('id') id: string, @Body() updateWorkoutDto: UpdateWorkoutDto, @Request() req) {
         try {
             return await this.workoutService.update(id, updateWorkoutDto, req.user.userId);
@@ -81,8 +79,7 @@ export class WorkoutController {
     }
 
     @Delete(':id')
-    @UseGuards(JwtAuthGuard, ResourceOwnerGuard)
-    @CheckResourceOwnership(ResourceType.WORKOUT)
+    @UseGuards(JwtAuthGuard)
     async remove(@Param('id') id: string, @Request() req) {
         try {
             return await this.workoutService.remove(id, req.user.userId);
