@@ -26,8 +26,7 @@ export class AuthService {
         throw new HttpException('Invalid Credentials', HttpStatus.UNAUTHORIZED);
     }
 
-    // ✅ Correct payload
-    // In auth.service.ts
+
     private generateToken(user: UserDocument): string {
         const payload = {
             sub: user._id.toString(),
