@@ -36,8 +36,12 @@ jobs:
       - name: Build project
         run: pnpm build
 
+      # Add this step to install Netlify CLI
+      - name: Install Netlify CLI
+        run: npm install -g netlify-cli
+
       - name: Deploy to Netlify
-        run: pnpm netlify deploy --prod --dir=build
+        run: netlify deploy --prod --dir=build
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
