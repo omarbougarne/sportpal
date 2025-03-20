@@ -6,6 +6,7 @@ import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { Role } from '../users/enums/role.enum';
+import { User } from '../users/schema/users.schema';
 
 // Mock bcrypt
 jest.mock('bcryptjs');
@@ -21,6 +22,7 @@ describe('AuthService', () => {
     email: 'test@example.com',
     name: 'Test User',
     password: 'hashedPassword123',
+    role: [Role.User],
     toString: jest.fn().mockReturnValue('123456789012345678901234')
   };
 
@@ -41,14 +43,16 @@ describe('AuthService', () => {
         {
           provide: UsersService,
           useValue: {
-            create: jest.fn(),
-            findByEmail: jest.fn()
+            create: jest.fn().mockResolvedValue(mockUser),
+            findByEmail: jest.fn().mockResolvedValue(mockUser)
           }
         },
         // Mock JwtService
         {
           provide: JwtService,
-          useValue: { sign: jest.fn() }
+          useValue: {
+            sign: jest.fn().mockReturnValue(mockAccessToken)
+          }
         }
       ],
     }).compile();
@@ -64,38 +68,27 @@ describe('AuthService', () => {
 
   describe('signUp', () => {
     it('should create a new user and return the user document', async () => {
-      // Setup
-      jest.spyOn(usersService, 'create').mockResolvedValue(mockUser as any);
-
-      // Execute
       const result = await authService.signUp(mockCreateUserDto);
 
-      // Assert
       expect(usersService.create).toHaveBeenCalledWith(mockCreateUserDto);
       expect(result).toEqual(mockUser);
     });
 
     it('should propagate errors from usersService', async () => {
-      // Setup
       const error = new Error('Failed to create user');
-      jest.spyOn(usersService, 'create').mockRejectedValue(error);
+      jest.spyOn(usersService, 'create').mockRejectedValueOnce(error);
 
-      // Execute & Assert
       await expect(authService.signUp(mockCreateUserDto)).rejects.toThrow(error);
     });
   });
 
   describe('login', () => {
     it('should return access token when credentials are valid', async () => {
-      // Setup
-      jest.spyOn(usersService, 'findByEmail').mockResolvedValue(mockUser as any);
+      // Setup bcrypt to return true for password comparison
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
-      jest.spyOn(jwtService, 'sign').mockReturnValue(mockAccessToken);
 
-      // Execute
       const result = await authService.login('test@example.com', 'Password123!');
 
-      // Assert
       expect(usersService.findByEmail).toHaveBeenCalledWith('test@example.com');
       expect(bcrypt.compare).toHaveBeenCalledWith('Password123!', 'hashedPassword123');
       expect(jwtService.sign).toHaveBeenCalledWith({
@@ -106,26 +99,21 @@ describe('AuthService', () => {
     });
 
     it('should throw unauthorized exception when user is not found', async () => {
-      // Setup
-      jest.spyOn(usersService, 'findByEmail').mockResolvedValue(null);
+      // Override the mock to return null for this test
+      jest.spyOn(usersService, 'findByEmail').mockResolvedValueOnce(null);
 
-      // Execute & Assert
       await expect(authService.login('wrong@example.com', 'Password123!')).rejects.toThrow(
         new HttpException('Invalid Credentials', HttpStatus.UNAUTHORIZED)
       );
     });
 
     it('should throw unauthorized exception when password is incorrect', async () => {
-      // Setup
-      jest.spyOn(usersService, 'findByEmail').mockResolvedValue(mockUser as any);
-      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+      // Setup bcrypt to return false for this test
+      (bcrypt.compare as jest.Mock).mockResolvedValueOnce(false);
 
-      // Execute & Assert
       await expect(authService.login('test@example.com', 'WrongPassword!')).rejects.toThrow(
         new HttpException('Invalid Credentials', HttpStatus.UNAUTHORIZED)
       );
     });
   });
-
-  // We don't test private methods directly, but they're covered by login test
 });
