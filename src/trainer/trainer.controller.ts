@@ -1,6 +1,9 @@
 import {
     Controller, Get, Post, Body, Patch, Param, Delete,
-    Query, UseGuards, Logger, Request
+    Query, UseGuards, Logger, Request,
+    HttpException,
+    HttpStatus,
+    NotFoundException
 } from '@nestjs/common';
 import { TrainerService } from './trainer.service';
 import { CreateTrainerDto } from './dto/create-trainer.dto';
@@ -136,15 +139,49 @@ export class TrainerController {
         @Request() req
     ) {
         try {
-            // Set the user ID from the JWT token
-            reviewDto.userId = req.user.userId;
-            return await this.trainerService.addReview(id, reviewDto);
+            return await this.trainerService.addReviewToTrainer(
+                id,
+                req.user.userId,
+                { rating: reviewDto.rating, comment: reviewDto.comment }
+            );
         } catch (error) {
             this.logger.error(`Error in addReview controller: ${error.message}`, error.stack);
             throw error;
         }
     }
+    @Get(':id/reviews')
+    async getTrainerReviews(@Param('id') trainerId: string) {
+        try {
+            return await this.trainerService.getTrainerReviews(trainerId);
+        } catch (error) {
+            this.logger.error(`Error fetching reviews: ${error.message}`, error.stack);
 
+            if (error instanceof NotFoundException) {
+                throw error;
+            }
+
+            throw new HttpException('Failed to fetch reviews', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @Delete(':trainerId/reviews/:reviewId')
+    @UseGuards(JwtAuthGuard)
+    async deleteReview(
+        @Param('trainerId') trainerId: string,
+        @Param('reviewId') reviewId: string,
+        @Request() req
+    ) {
+        try {
+            return await this.trainerService.deleteReview(trainerId, reviewId, req.user.userId);
+        } catch (error) {
+            this.logger.error(`Error deleting review: ${error.message}`, error.stack);
+
+            if (error instanceof NotFoundException || error instanceof HttpException) {
+                throw error;
+            }
+
+            throw new HttpException('Failed to delete review', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
     @Post(':id/workouts/:workoutId')
     @UseGuards(JwtAuthGuard)
     async addWorkout(

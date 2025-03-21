@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Group, GroupDocument } from './schema/group.schema';
-import { Model, Types } from 'mongoose';
+import mongoose, { Model, Types } from 'mongoose';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UsersService } from '../users/users.service';
 
@@ -206,26 +206,59 @@ export class GroupService {
             throw new HttpException('Error searching groups by name', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
-    async addMessageToGroup(groupId: string, messageId: Types.ObjectId): Promise<void> {
-        await this.groupModel.findByIdAndUpdate(
-            groupId,
-            { $push: { messages: messageId } },
-            { new: true }
-        );
-    }
-
-    async getGroupsByMemberId(userId: string): Promise<Group[]> {
+    async getJoinedGroups(userId: string) {
         try {
-            const userObjectId = new Types.ObjectId(userId);
+            // Log what we're querying with
+            console.log('Querying for groups with user ID:', userId);
+            console.log('User ID type:', typeof userId);
+
+            // Try converting string ID to ObjectId if needed
+            const objectId = new Types.ObjectId(userId);
+            console.log('Converted to ObjectId:', objectId);
+
+            // Try both formats
             const groups = await this.groupModel.find({
-                members: { $in: [userObjectId] }
+                members: { $in: [userId, objectId] }
             }).exec();
 
+            console.log(`Found ${groups.length} groups for user`);
             return groups;
         } catch (error) {
-            this.logger.error(`Error fetching groups for member ${userId}`, error.stack);
-            throw new HttpException('Error fetching user groups', HttpStatus.INTERNAL_SERVER_ERROR);
+            console.error('Error in getJoinedGroups:', error);
+            throw error;
+        }
+    }
+    // In your group.service.ts file
+    async getGroupsByMemberId(userId: string): Promise<Group[]> {
+        try {
+            this.logger.log(`Finding groups for member with ID: ${userId}`);
+
+            // Convert to ObjectId for proper querying
+            const userObjectId = new Types.ObjectId(userId);
+
+            // Find groups where the user is a member
+            // The $elemMatch ensures we're properly matching on the userId field within members objects
+            const groups = await this.groupModel.find({
+                'members.userId': userObjectId
+            })
+                .select('-__v') // Optional: exclude version field
+                .lean() // For better performance if you don't need Mongoose documents
+                .exec();
+
+            this.logger.log(`Found ${groups.length} groups for member ${userId}`);
+            return groups;
+        } catch (error) {
+            this.logger.error(`Error finding groups for member: ${error.message}`, error.stack);
+
+            // Better error handling based on type
+            if (error.name === 'CastError') {
+                throw new BadRequestException(`Invalid user ID format: ${userId}`);
+            }
+
+            throw new HttpException(
+                'Error finding groups for member',
+                HttpStatus.INTERNAL_SERVER_ERROR
+            );
         }
     }
 
@@ -263,6 +296,59 @@ export class GroupService {
                 throw error;
             }
             throw new HttpException('Error leaving group', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    // Add to group.service.ts
+    async removeMultipleMembers(groupId: string, memberIds: string[], requestUserId: string): Promise<Group> {
+        try {
+            const group = await this.groupModel.findById(groupId);
+            if (!group) {
+                throw new NotFoundException(`Group with ID ${groupId} not found`);
+            }
+
+            // Check if requestUser is the organizer
+            const organizerId = group.organizer.userId.toString();
+            if (organizerId !== requestUserId) {
+                throw new HttpException(
+                    'Only group organizers can remove members',
+                    HttpStatus.FORBIDDEN
+                );
+            }
+
+            // Don't allow removing the organizer
+            if (memberIds.includes(organizerId)) {
+                throw new BadRequestException('Cannot remove the group organizer');
+            }
+
+            // Convert all memberIds to ObjectIds
+            const memberObjectIds = memberIds.map(id => new Types.ObjectId(id));
+
+            // Filter out the members to be removed
+            const originalCount = group.members.length;
+            group.members = group.members.filter(member =>
+                !memberObjectIds.some(id => id.equals(member.userId))
+            );
+
+            // Check if any members were actually removed
+            if (originalCount === group.members.length) {
+                throw new BadRequestException('None of the specified members were found in the group');
+            }
+
+            await group.save();
+            this.logger.log(`Removed ${originalCount - group.members.length} members from group ${groupId}`);
+
+            return group;
+        } catch (error) {
+            this.logger.error(`Error removing members from group: ${error.message}`, error.stack);
+
+            if (error instanceof HttpException) {
+                throw error;
+            }
+
+            throw new HttpException(
+                'Error removing members from group',
+                HttpStatus.INTERNAL_SERVER_ERROR
+            );
         }
     }
 }

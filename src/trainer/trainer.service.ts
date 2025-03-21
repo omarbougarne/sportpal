@@ -196,43 +196,27 @@ export class TrainerService {
         }
     }
 
-    async addReview(id: string, reviewDto: ReviewTrainerDto): Promise<Trainer> {
+    async addReviewToTrainer(trainerId: string, userId: string, reviewData: { rating: number, comment: string }): Promise<Trainer> {
         try {
-            const trainer = await this.trainerModel.findById(id).exec();
+            const trainer = await this.trainerModel.findById(trainerId).exec();
             if (!trainer) {
-                throw new NotFoundException(`Trainer with ID ${id} not found`);
+                throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
             }
 
-            // Check if user has already reviewed this trainer
-            const existingReviewIndex = trainer.reviews.findIndex(
-                review => review.userId.toString() === reviewDto.userId
-            );
+            // Create new review with _id
+            const newReview = {
+                _id: new Types.ObjectId(), // Add this line
+                userId: new Types.ObjectId(userId),
+                rating: reviewData.rating,
+                comment: reviewData.comment,
+                createdAt: new Date()
+            };
 
-            if (existingReviewIndex !== -1) {
-                // Update existing review
-                trainer.reviews[existingReviewIndex] = {
-                    userId: new Types.ObjectId(reviewDto.userId),
-                    rating: reviewDto.rating,
-                    comment: reviewDto.comment,
-                    createdAt: new Date(),
-                };
-            } else {
-                // Add new review
-                trainer.reviews.push({
-                    userId: new Types.ObjectId(reviewDto.userId),
-                    rating: reviewDto.rating,
-                    comment: reviewDto.comment,
-                    createdAt: new Date(),
-                });
-            }
+            trainer.reviews.push(newReview);
 
-            // Calculate new average rating
-            if (trainer.reviews.length > 0) {
-                const totalRating = trainer.reviews.reduce((sum, review) => sum + review.rating, 0);
-                trainer.averageRating = totalRating / trainer.reviews.length;
-            } else {
-                trainer.averageRating = 0;
-            }
+            // Recalculate average rating
+            const totalRating = trainer.reviews.reduce((sum, review) => sum + review.rating, 0);
+            trainer.averageRating = totalRating / trainer.reviews.length;
 
             return await trainer.save();
         } catch (error) {
@@ -243,7 +227,76 @@ export class TrainerService {
             throw new HttpException('Error adding review', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    async getTrainerReviews(trainerId: string): Promise<any[]> {
+        try {
+            const trainer = await this.trainerModel.findById(trainerId)
+                .populate({
+                    path: 'reviews.userId',
+                    select: 'name profileImageUrl'
+                })
+                .exec();
 
+            if (!trainer) {
+                throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
+            }
+
+            // Return reviews with user details included
+            return trainer.reviews.map(review => ({
+                id: review._id,
+                rating: review.rating,
+                comment: review.comment,
+                createdAt: review.createdAt,
+                user: review.userId
+            }));
+        } catch (error) {
+            if (error instanceof NotFoundException) {
+                throw error;
+            }
+            this.logger.error(`Error fetching trainer reviews: ${error.message}`, error.stack);
+            throw new HttpException('Error fetching trainer reviews', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    async deleteReview(trainerId: string, reviewId: string, userId: string): Promise<Trainer> {
+        try {
+            const trainer = await this.trainerModel.findById(trainerId).exec();
+            if (!trainer) {
+                throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
+            }
+
+            // Find the review index
+            const reviewIndex = trainer.reviews.findIndex(
+                review => review._id.toString() === reviewId
+            );
+
+            if (reviewIndex === -1) {
+                throw new NotFoundException(`Review not found`);
+            }
+
+            // Check if the user owns this review
+            if (trainer.reviews[reviewIndex].userId.toString() !== userId) {
+                throw new HttpException('Unauthorized to delete this review', HttpStatus.FORBIDDEN);
+            }
+
+            // Remove the review
+            trainer.reviews.splice(reviewIndex, 1);
+
+            // Recalculate average rating
+            if (trainer.reviews.length > 0) {
+                const totalRating = trainer.reviews.reduce((sum, review) => sum + review.rating, 0);
+                trainer.averageRating = totalRating / trainer.reviews.length;
+            } else {
+                trainer.averageRating = 0;
+            }
+
+            return await trainer.save();
+        } catch (error) {
+            if (error instanceof NotFoundException || error instanceof HttpException) {
+                throw error;
+            }
+            this.logger.error(`Error deleting review: ${error.message}`, error.stack);
+            throw new HttpException('Error deleting review', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
     async addWorkout(id: string, workoutId: string): Promise<Trainer> {
         try {
             const trainer = await this.trainerModel.findById(id).exec();

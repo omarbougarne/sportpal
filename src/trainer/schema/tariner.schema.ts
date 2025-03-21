@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document, Types, Schema as MongooseSchema } from 'mongoose';
 import { CertificationType } from '../enums/certification-type.enum';
 import { SpecializationType } from '../enums/serialization-type.enum';
 
@@ -25,6 +25,8 @@ export class Certification {
 }
 
 export class Review {
+    @Prop({ type: MongooseSchema.Types.ObjectId, auto: true })
+    _id: Types.ObjectId;
     @Prop({ type: Types.ObjectId, ref: 'User', required: true })
     userId: Types.ObjectId;
 

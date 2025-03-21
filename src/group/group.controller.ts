@@ -47,16 +47,51 @@ export class GroupController {
             throw error;
         }
     }
+    @Get('search')
+    async searchGroupsByParam(@Query('name') name: string) {
+        try {
+            const groups = await this.groupService.searchGroupsByParam(name);
+            return groups;
+        } catch (error) {
+            this.logger.error('Error in searchGroupsByName controller', error.stack);
+            throw new HttpException('Failed to search groups', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @Get('member/:userId')
     async getGroupsByMemberId(@Param('userId') userId: string) {
         try {
-            const groups = await this.groupService.getGroupsByMemberId(userId);
-            return groups;
+            return await this.groupService.getGroupsByMemberId(userId);
         } catch (error) {
-            this.logger.error('Error in getGroupsByMemberId controller', error.stack);
-            throw new HttpException('Failed to fetch user groups', HttpStatus.INTERNAL_SERVER_ERROR);
+            this.logger.error('Error fetching member groups', error.stack);
+
+            // Re-throw NestJS exceptions as-is
+            if (error instanceof HttpException) {
+                throw error;
+            }
+
+            throw new HttpException(
+                'Failed to fetch member groups',
+                HttpStatus.INTERNAL_SERVER_ERROR
+            );
         }
     }
+    @Get('joined')
+    @UseGuards(JwtAuthGuard)
+    async getJoinedGroups(@Request() req) {
+        try {
+            const userId = req.user.sub;
+            if (!userId) {
+                throw new BadRequestException('User ID not found in authentication token');
+            }
+            return await this.groupService.getJoinedGroups(userId);
+        } catch (error) {
+            this.logger.error('Error in getJoinedGroups controller', error.stack);
+            throw new HttpException('Failed to fetch joined groups', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
     @Post(':id/leave')
     @UseGuards(JwtAuthGuard)
     async leaveGroup(@Param('id') groupId: string, @Request() req) {
@@ -169,35 +204,36 @@ export class GroupController {
             throw new HttpException('Failed to list group members', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
-    @Get('search')
-    async searchGroupsByParam(@Query('name') name: string) {
+    // Add to group.controller.ts
+    @Delete(':groupId/members')
+    @UseGuards(JwtAuthGuard)
+    async removeMembers(
+        @Param('groupId') groupId: string,
+        @Body() body: { memberIds: string[] },
+        @Request() req
+    ) {
         try {
-            const groups = await this.groupService.searchGroupsByParam(name);
-            return groups;
+            // Validate input
+            if (!body.memberIds || !Array.isArray(body.memberIds) || body.memberIds.length === 0) {
+                throw new BadRequestException('Please provide an array of member IDs to remove');
+            }
+
+            return await this.groupService.removeMultipleMembers(
+                groupId,
+                body.memberIds,
+                req.user.userId
+            );
         } catch (error) {
-            this.logger.error('Error in searchGroupsByName controller', error.stack);
-            throw new HttpException('Failed to search groups', HttpStatus.INTERNAL_SERVER_ERROR);
+            this.logger.error(`Error in removeMembers controller: ${error.message}`, error.stack);
+
+            if (error instanceof HttpException) {
+                throw error;
+            }
+
+            throw new HttpException(
+                'Failed to remove members from group',
+                HttpStatus.INTERNAL_SERVER_ERROR
+            );
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
