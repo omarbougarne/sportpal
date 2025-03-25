@@ -20,19 +20,20 @@ export class TrainerService {
 
     async create(createTrainerDto: CreateTrainerDto): Promise<Trainer> {
         try {
-            // Check if user exists
+
             const user = await this.usersService.findOne(createTrainerDto.userId);
             if (!user) {
                 throw new NotFoundException(`User with ID ${createTrainerDto.userId} not found`);
             }
 
-            // Check if trainer profile already exists for this user
+
             const existingTrainer = await this.trainerModel.findOne({ userId: createTrainerDto.userId }).exec();
             if (existingTrainer) {
                 throw new ConflictException(`Trainer profile already exists for user ${createTrainerDto.userId}`);
             }
 
-            // Create trainer profile
+
+
             const createdTrainer = new this.trainerModel({
                 ...createTrainerDto,
                 userId: new Types.ObjectId(createTrainerDto.userId),
@@ -88,9 +89,9 @@ export class TrainerService {
             }
 
             if (searchTerm) {
-                // This requires a join with users collection to search by name
-                // You would need to implement an aggregation pipeline for this
-                // For now, we'll skip this part and search only within trainer fields
+
+
+
             }
 
             const total = await this.trainerModel.countDocuments(query);
@@ -157,7 +158,7 @@ export class TrainerService {
 
     async update(id: string, updateTrainerDto: UpdateTrainerDto): Promise<Trainer> {
         try {
-            // Handle ObjectId conversions
+
             if (updateTrainerDto.location) {
                 updateTrainerDto.location = new Types.ObjectId(updateTrainerDto.location) as any;
             }
@@ -203,9 +204,9 @@ export class TrainerService {
                 throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
             }
 
-            // Create new review with _id
+
             const newReview = {
-                _id: new Types.ObjectId(), // Add this line
+                _id: new Types.ObjectId(),
                 userId: new Types.ObjectId(userId),
                 rating: reviewData.rating,
                 comment: reviewData.comment,
@@ -214,7 +215,7 @@ export class TrainerService {
 
             trainer.reviews.push(newReview);
 
-            // Recalculate average rating
+
             const totalRating = trainer.reviews.reduce((sum, review) => sum + review.rating, 0);
             trainer.averageRating = totalRating / trainer.reviews.length;
 
@@ -240,7 +241,7 @@ export class TrainerService {
                 throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
             }
 
-            // Return reviews with user details included
+
             return trainer.reviews.map(review => ({
                 id: review._id,
                 rating: review.rating,
@@ -263,7 +264,7 @@ export class TrainerService {
                 throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
             }
 
-            // Find the review index
+
             const reviewIndex = trainer.reviews.findIndex(
                 review => review._id.toString() === reviewId
             );
@@ -272,15 +273,15 @@ export class TrainerService {
                 throw new NotFoundException(`Review not found`);
             }
 
-            // Check if the user owns this review
+
             if (trainer.reviews[reviewIndex].userId.toString() !== userId) {
                 throw new HttpException('Unauthorized to delete this review', HttpStatus.FORBIDDEN);
             }
 
-            // Remove the review
+
             trainer.reviews.splice(reviewIndex, 1);
 
-            // Recalculate average rating
+
             if (trainer.reviews.length > 0) {
                 const totalRating = trainer.reviews.reduce((sum, review) => sum + review.rating, 0);
                 trainer.averageRating = totalRating / trainer.reviews.length;
@@ -322,22 +323,22 @@ export class TrainerService {
 
     async becomeTrainer(userId: string, createTrainerDto: CreateTrainerDto): Promise<Trainer> {
         try {
-            // Check if user exists
+
             const user = await this.usersService.findOne(userId);
             if (!user) {
                 throw new NotFoundException(`User with ID ${userId} not found`);
             }
 
-            // Check if trainer profile already exists
+
             const existingTrainer = await this.trainerModel.findOne({ userId: new Types.ObjectId(userId) }).exec();
             if (existingTrainer) {
                 throw new ConflictException(`Trainer profile already exists for user ${userId}`);
             }
 
-            // Update user role to TRAINER
-            await this.usersService.updateRole(userId, Role.Trainer);
 
-            // Create trainer profile
+            await this.usersService.addRole(userId, Role.Trainer);
+
+
             const createdTrainer = new this.trainerModel({
                 ...createTrainerDto,
                 userId: new Types.ObjectId(userId),

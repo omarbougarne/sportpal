@@ -31,34 +31,4 @@ jobs:
       #   run: pnpm lint
   
       - name: Run tests
-        run: pnpm test -- "src/(group|auth)/**/*.spec.ts"
-
-      - name: Build project
-        run: pnpm build
-
-      # Add this step to install Netlify CLI
-      - name: Install Netlify CLI
-        run: npm install -g netlify-cli
-
-      - name: Deploy to Netlify
-        run: netlify deploy --prod --dir=build
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-
-  delete-branch:
-    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref != 'main'
-    runs-on: windows-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Delete branch
-        run: |
-          branch=${{ github.event.pull_request.head.ref }}
-          if [ "$branch" != "main" ]; then
-            git push origin --delete $branch
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm test 

@@ -12,7 +12,7 @@ import { RolesGuard } from './auth/common/guards/roles.guard';
 import { GroupModule } from './group/group.module';
 import { WorkoutModule } from './workout/workout.module';
 import { TrainerModule } from './trainer/trainer.module';
-import { ContractModule } from './contract/contract.module';
+import { StatisticsModule } from './statistics/statistics.module';
 
 @Module({
   imports: [
@@ -24,16 +24,14 @@ import { ContractModule } from './contract/contract.module';
     UsersModule,
     AuthModule,
     GroupModule,
-    // LocationModule,
-    // GeocodingModule,
+    StatisticsModule,
     WorkoutModule,
     TrainerModule,
-    ContractModule
+    StatisticsModule
   ],
   controllers: [AppController],
   providers: [
     AppService,
-    // GeocodingService,
     RolesGuard,
   ],
 })

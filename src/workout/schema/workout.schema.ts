@@ -45,10 +45,10 @@ export class Workout {
     difficultyLevel: DifficultyLevel;
 
     @Prop({ required: true, min: 0 })
-    duration: number; // in minutes
+    duration: number;
 
     @Prop({ required: true, min: 0 })
-    caloriesBurn: number; // estimated calories
+    caloriesBurn: number;
 
     @Prop({ type: [{ type: Object }], required: true })
     exercises: Exercise[];

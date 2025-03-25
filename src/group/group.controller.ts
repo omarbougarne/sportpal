@@ -146,7 +146,16 @@ export class GroupController {
             throw new HttpException('Failed to fetch group', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    @Get(':id/members')
+    async getGroupMembers(@Param('id') id: string) {
+        const group = await this.groupService.getGroupById(id);
+        if (!group) {
+            throw new NotFoundException(`Group with ID ${id} not found`);
+        }
 
+        // Return the members array directly
+        return group.members;
+    }
     @Patch(':id')
     async updateGroup(@Param('id') groupId: string, @Body() updateGroupDto: CreateGroupDto) {
         try {

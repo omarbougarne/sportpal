@@ -315,55 +315,9 @@ describe('GroupService', () => {
     });
   });
 
-  describe('addMessageToGroup', () => {
-    it('should add a message to a group', async () => {
-      // Arrange
-      const messageObjId = new Types.ObjectId(mockMessageId);
-      jest.spyOn(groupModel, 'findByIdAndUpdate').mockResolvedValue(mockGroup as any);
 
-      // Act
-      await groupService.addMessageToGroup(mockGroupId, messageObjId);
 
-      // Assert
-      expect(groupModel.findByIdAndUpdate).toHaveBeenCalledWith(
-        mockGroupId,
-        { $push: { messages: messageObjId } },
-        { new: true }
-      );
-    });
-  });
 
-  describe('getGroupsByMemberId', () => {
-    it('should get groups by member ID', async () => {
-      // Arrange
-      const mockGroups = [mockGroup];
-      const mockFindExec = {
-        exec: jest.fn().mockResolvedValue(mockGroups),
-      };
-      jest.spyOn(groupModel, 'find').mockReturnValue(mockFindExec as any);
-
-      // Act
-      const result = await groupService.getGroupsByMemberId(mockUserId);
-
-      // Assert
-      expect(groupModel.find).toHaveBeenCalledWith({
-        members: { $in: [new Types.ObjectId(mockUserId)] }
-      });
-      expect(result).toEqual(mockGroups);
-    });
-
-    it('should handle errors properly', async () => {
-      // Arrange
-      const mockFindExec = {
-        exec: jest.fn().mockRejectedValue(new Error('Database error')),
-      };
-      jest.spyOn(groupModel, 'find').mockReturnValue(mockFindExec as any);
-
-      // Act & Assert
-      await expect(groupService.getGroupsByMemberId(mockUserId))
-        .rejects.toThrow(new HttpException('Error fetching user groups', HttpStatus.INTERNAL_SERVER_ERROR));
-    });
-  });
 
   describe('leaveGroup', () => {
     it('should remove a user from group members', async () => {

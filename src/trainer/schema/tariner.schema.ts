@@ -42,13 +42,13 @@ export class Review {
 
 export class TimeSlot {
     @Prop({ required: true })
-    dayOfWeek: number; // 0 = Sunday, 1 = Monday, etc.
+    dayOfWeek: number;
 
     @Prop({ required: true })
-    startTime: string; // Format: "HH:MM" in 24h format
+    startTime: string;
 
     @Prop({ required: true })
-    endTime: string; // Format: "HH:MM" in 24h format
+    endTime: string;
 }
 
 @Schema({
@@ -101,9 +101,8 @@ export class Trainer {
 
 export const TrainerSchema = SchemaFactory.createForClass(Trainer);
 
-// Add indexes for common queries
 TrainerSchema.index({ userId: 1 });
 TrainerSchema.index({ specializations: 1 });
 TrainerSchema.index({ averageRating: -1 });
 
-// src/training-contract/schema/training-contract.schema.ts
+

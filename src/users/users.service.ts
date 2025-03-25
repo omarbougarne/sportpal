@@ -1,4 +1,4 @@
-import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { isValidObjectId, Model, Types } from 'mongoose';
 import { User, UserDocument } from './schema/users.schema';
@@ -6,32 +6,32 @@ import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcryptjs';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Role } from './enums/role.enum';
-// import { GeocodingService } from 'src/geocoding/geocoding.service';
+
 
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name)
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>,
-    // private geocodingService: GeocodingService
+
   ) { }
   async findOne(id: string): Promise<UserDocument> {
-    // const userId = new Types.ObjectId(id);
+
     const user = await this.userModel.findOne({ id });
     return user;
   }
   async create(createUserDto: CreateUserDto): Promise<UserDocument> {
     try {
-      // Check if user already exists
+
       const existingUser = await this.userModel.findOne({ email: createUserDto.email }).exec();
       if (existingUser) {
         throw new HttpException('User already exists', HttpStatus.CONFLICT);
       }
 
-      // Hash the password
+
       const salt = await bcrypt.genSalt();
       const hashedPassword = await bcrypt.hash(createUserDto.password, salt);
 
-      // Create the new user
+
       const createUser = new this.userModel({
         ...createUserDto,
         password: hashedPassword,
@@ -73,9 +73,9 @@ export class UsersService {
       throw new HttpException('Error finding user', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
-  // async findByEmail(email: string): Promise<UserDocument> {
-  //   return this.userModel.findOne({ email }).exec();
-  // }
+
+
+
   async findByEmail(email: string): Promise<UserDocument> {
     try {
       const user = await this.userModel.findOne({ email }).exec();
@@ -155,59 +155,40 @@ export class UsersService {
     }
   }
 
-
-  async updateUserLocation(userId: string, longitude: number, latitude: number): Promise<User> {
-    try {
-      return this.userModel.findByIdAndUpdate(
-        userId,
-        {
-          $set: {
-            location: {
-              type: 'Point',
-              coordinates: [longitude, latitude]
-            }
-          }
-        },
-        { new: true }
-      ).exec();
-    } catch (error) {
-      throw new HttpException('Error updating user location', HttpStatus.INTERNAL_SERVER_ERROR);
+  async addRole(userId: string, role: Role): Promise<User> {
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
     }
+
+
+    if (!user.role.includes(role)) {
+      user.role.push(role);
+      await user.save();
+    }
+
+    return user;
   }
 
-  // Find nearby users
-  async findNearbyUsers(userId: string, maxDistance: number = 5000, limit: number = 20): Promise<User[]> {
-    try {
-      const user = await this.userModel.findById(userId);
-      if (!user || !user.location) {
-        throw new HttpException('User not found or has no location', HttpStatus.BAD_REQUEST);
-      }
-
-      // Find users within radius excluding the requesting user
-      return this.userModel.find({
-        _id: { $ne: userId },
-        location: {
-          $near: {
-            $geometry: {
-              type: 'Point',
-              coordinates: user.location.coordinates
-            },
-            $maxDistance: maxDistance
-          }
-        }
-      })
-        .limit(limit)
-        .select('-password') // Exclude sensitive data
-        .exec();
-    } catch (error) {
-      throw new HttpException('Error finding nearby users', HttpStatus.INTERNAL_SERVER_ERROR);
+  async removeRole(userId: string, role: Role): Promise<User> {
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
     }
+
+
+    if (user.role.length <= 1 || (user.role.length === 2 && user.role.includes(Role.User))) {
+      throw new BadRequestException('Cannot remove the last or base user role');
+    }
+
+    user.role = user.role.filter(r => r !== role);
+    await user.save();
+
+    return user;
   }
-  async updateRole(userId: string, role: Role): Promise<User> {
-    return this.userModel.findByIdAndUpdate(
-      userId,
-      { role },
-      { new: true }
-    );
+
+  async hasRole(userId: string, role: Role): Promise<boolean> {
+    const user = await this.userModel.findById(userId).select('roles').lean();
+    return user?.role?.includes(role) || false;
   }
 }

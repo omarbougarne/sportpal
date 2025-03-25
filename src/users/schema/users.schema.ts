@@ -39,7 +39,7 @@ export class User {
 
 
   @Prop({ type: String, enum: Role, default: Role.User })
-  role: Role;
+  role: Role[];
 
   @Prop({ type: Object, required: false })
   preferences?: Record<string, any>;
@@ -50,23 +50,6 @@ export class User {
   @Prop({ type: String, enum: AccountStatus, required: false })
   accountStatus?: AccountStatus;
 
-  @Prop({
-    type: {
-      type: String,
-      enum: ['Point'],
-      default: 'Point',
-    },
-    coordinates: {
-      type: [Number],
-      default: [0, 0],
-    },
-  })
-  location: {
-    type: string;
-    coordinates: number[];
-  };
 
 }
-
 export const UserSchema = SchemaFactory.createForClass(User);
-UserSchema.index({ location: '2dsphere' });
